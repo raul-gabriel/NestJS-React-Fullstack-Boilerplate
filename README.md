@@ -158,6 +158,11 @@ npm run build
 Con esto el proyecto queda como un único servidor listo para producción.
 
 ---
+## Vista previa
+
+![Login](./captura/login.png)
+![Panel](./captura/panel.png)
+![Perfil](./captura/perfil.png)
 
 ## Documentación
 

@@ -47,6 +47,7 @@ function Rutas() {
             <Route path="home" element={<HomeDasboard />} />
             <Route path="usuarios" element={<Usuarios />} />
             <Route path="perfil" element={<Perfil />} />
+          
 
           </Route>
         </Route>

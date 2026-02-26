@@ -4,7 +4,11 @@ import { redirigir } from "@/lib/hooks/navigation";
 import { Alerta, ToastFlotanteChico } from "./Toas";
 import { borrarToken, login } from "@/lib/api/api_auth";
 
-
+/*
+Servicio de gestión de sesión que controla login (metodos para las sessiones que llama 
+a las api atravez de api_auth.ts) 
+estos metodos son llamados desde compoentes .
+*/
 
 export const IniciarSesion = async (email: string, password: string): Promise<{ estado: boolean; message: string }> => {
     const { estado, message, perfil } = await login(email, password);
@@ -16,7 +20,7 @@ export const IniciarSesion = async (email: string, password: string): Promise<{ 
 
     return { estado, message };
 };
-    
+
 
 
 export async function cerrarSesion() {

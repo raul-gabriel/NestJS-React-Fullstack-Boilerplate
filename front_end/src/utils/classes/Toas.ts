@@ -1,6 +1,10 @@
 import Swal from "sweetalert2";
 
-
+/*
+Utilidades de notificación y alertas basadas en SweetAlert2 que muestran toasts,
+ mensajes informativos y confirmaciones
+ dinámicas según el tipo o estado recibido.
+*/
 
 //recibmos como parametro el stado de una api u tipo para las alertas 
 type TipoIcono = 'success' | 'error' | 'info' | 'warning' | 'question';
@@ -44,26 +48,6 @@ export function Alerta(tipo: TipoEntrada, texto?: string, titulo?: string) {
   });
 }
 
-/*
-export function Alerta(tipo: TipoEntrada, titulo: string, subtitulo?: string) {
-  const icono = determinarTipoStados(tipo);
-
-  Swal.fire({
-    title: titulo,
-    ...(subtitulo && {
-      html: `<div style="margin-top:6px;font-size:13px;color:#6b7280">
-              ${subtitulo}
-            </div>`
-    }),
-    icon: icono,
-    showClass: {
-      popup: 'animate__animated animate__fadeInUp animate__faster',
-    },
-    hideClass: {
-      popup: 'animate__animated animate__fadeOutDown animate__faster',
-    },
-  });
-}*/
 
 export function AlertaConfirmacion(texto: string): Promise<boolean> {
   return Swal.fire({

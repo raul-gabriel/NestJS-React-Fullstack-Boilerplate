@@ -1,98 +1,256 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# NestJS backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+API REST construida con NestJS, TypeORM y MySQL. Incluye autenticación JWT con cookies HttpOnly y control de acceso por roles.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+---
 
-## Description
-
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Project setup
+# Librerias Usadas
+instala estas librerias si vas a usarlo en un proyecto limpio.
 
 ```bash
-$ npm install
+npm install @nestjs/typeorm typeorm mysql2
+npm install @nestjs/jwt
+npm install class-validator class-transformer
+npm install @nestjs/config
+npm install cookie-parser
+npm install @types/cookie-parser --save-dev
+npm install @nestjs/serve-static
 ```
 
-## Compile and run the project
+---
+
+## Estructura relevante
+
+| Archivo | Descripción |
+|---|---|
+| `src/core/config/database.config.ts` | Configuración de conexión MySQL con TypeORM |
+| `src/core/common/enums/roles.enum.ts` | Roles disponibles para control de acceso |
+| `src/core/common/validaciones.dto.ts` | Decoradores personalizados para validar DTOs |
+| `src/core/common/codificador.service.ts` | Métodos para encriptar y desencriptar datos |
+| `src/modules/auth/guards/auth.guard.ts` | Verifica que el usuario tenga sesión activa |
+| `src/modules/auth/guards/roles.guard.ts` | Verifica sesión y permisos por rol |
+| `src/modules/auth/auth.service.ts` | Lógica de inicio y cierre de sesión |
+
+---
+
+## Autenticación
+
+### Login
+```http
+POST /api/auth/login
+Content-Type: application/json
+
+{ "username": "correo@ejemplo.com", "password": "1234" }
+```
+Si las credenciales son correctas, guarda el JWT en una cookie HttpOnly y devuelve los datos del perfil.
+
+### Logout
+```http
+POST /api/auth/logout
+```
+Elimina la cookie del navegador y cierra la sesión.
+
+---
+
+## Crear un nuevo módulo
 
 ```bash
-# development
-$ npm run start
+nest g resource modules/libros --no-spec
+```
+Seleccionar: **REST API → Yes** para generar controlador, servicio, DTOs y entidad.
 
-# watch mode
-$ npm run start:dev
+<br><br>
+---
 
-# production mode
-$ npm run start:prod
+# Proteger rutas
+
+**Todo el controlador** — se coloca debajo de `@Controller()`:
+```typescript
+@Controller('libros')
+@Auth(UserRole.ADMIN, UserRole.EDITOR)
+export class LibrosController { ... }
 ```
 
-## Run tests
-
-```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+**Un solo endpoint:**
+```typescript
+@Auth(UserRole.ADMIN)
+@Delete(':id')
+remove(@Param('id') id: string) {
+  return this.librosService.remove(+id);
+}
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+**Solo requiere sesión activa (sin restricción de rol):**
+```typescript
+@Auth()
+@Get()
+findAll() { ... }
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+> Los roles disponibles están definidos en `roles.enum.ts`.
 
-## Resources
 
-Check out a few resources that may come in handy when working with NestJS:
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+<br><br>
+---
 
-## Support
+# Ejemplo de módulo — Libros
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+### Tabla SQL
+```sql
+CREATE TABLE tlibro (
+  id INT NOT NULL AUTO_INCREMENT,
+  titulo VARCHAR(100) NOT NULL,
+  autor VARCHAR(100) NOT NULL,
+  precio DECIMAL(10,2) NOT NULL,
+  estado ENUM('activo', 'inactivo') NOT NULL DEFAULT 'activo',
+  PRIMARY KEY (id)
+);
+```
 
-## Stay in touch
+### Entidad
+```typescript
+@Entity('tlibro')
+export class Libro {
+  @PrimaryGeneratedColumn()
+  id!: number;
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+  @Column({ length: 100 })
+  titulo!: string;
 
-## License
+  @Column({ length: 100 })
+  autor!: string;
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+  @Column({ type: 'decimal', precision: 10, scale: 2 })
+  precio!: number;
+
+  @Column({ type: 'enum', enum: ['activo', 'inactivo'], default: 'activo' })
+  estado!: string;
+}
+```
+
+### DTO
+```typescript
+export class CreateLibroDto {
+  @Obligatorio('titulo')
+  @Maximo(100, 'titulo')
+  titulo!: string;
+
+  @Obligatorio('autor')
+  @Maximo(100, 'autor')
+  autor!: string;
+
+  @Obligatorio('precio')
+  @IsPositive({ message: 'El precio debe ser mayor a 0' })
+  precio!: number;
+
+  @Opcional()
+  estado?: 'activo' | 'inactivo';
+}
+```
+
+
+
+### Controlador
+```typescript
+@Auth(UserRole.ADMIN, UserRole.EDITOR)
+@Controller('libros')
+export class LibrosController {
+  constructor(private readonly librosService: LibrosService) {}
+
+  @Get()
+  findAll(@Query('buscar') buscar?: string) {
+    return this.librosService.findAll(buscar);
+  }
+
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.librosService.findOne(+id);
+  }
+
+  @Post()
+  create(@Body() dto: CreateLibroDto) {
+    return this.librosService.create(dto);
+  }
+
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() dto: UpdateLibroDto) {
+    return this.librosService.update(+id, dto);
+  }
+
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.librosService.remove(+id);
+  }
+}
+```
+
+### Service
+```typescript
+@Injectable()
+export class LibrosService {
+  constructor(@InjectRepository(Libro) private repo: Repository) {}
+
+  async findAll(buscar?: string) {
+    // Si hay búsqueda, filtra por titulo o autor; si no, devuelve todos
+    const where = buscar
+      ? [{ titulo: Like(`%${buscar}%`) }, { autor: Like(`%${buscar}%`) }]
+      : {};
+
+    return await this.repo.find({
+      select: ['id', 'titulo', 'autor', 'precio', 'estado'],
+      where,
+      order: { id: 'ASC' },
+    });
+  }
+
+  async findOne(id: number) {
+    const libro = await this.repo.findOne({ where: { id } });
+    if (!libro) throw new NotFoundException('Libro no encontrado');
+    return libro;
+  }
+
+  async create(dto: CreateLibroDto) {
+    const libro = this.repo.create(dto);
+    await this.repo.save(libro);
+    return { message: 'Libro registrado con éxito' };
+  }
+
+  async update(id: number, dto: UpdateLibroDto) {
+    const libro = await this.repo.findOne({ where: { id } });
+    if (!libro) throw new NotFoundException('Libro no encontrado');
+
+    Object.assign(libro, dto);
+    await this.repo.save(libro);
+    return { message: 'Libro modificado con éxito' };
+  }
+
+  async remove(id: number) {
+    const libro = await this.repo.findOne({ where: { id } });
+    if (!libro) throw new NotFoundException('Libro no encontrado');
+
+    try {
+      await this.repo.remove(libro);
+      return { message: 'Libro eliminado' };
+    } catch (error: any) {
+      // Error de FK: el registro está relacionado con otros y no se puede eliminar
+      if (error.code === 'ER_ROW_IS_REFERENCED_2' || error.errno === 1451) {
+        return { message: 'No se puede eliminar porque este registro está relacionado con otros registros' };
+      }
+      throw error;
+    }
+  }
+}
+```
+
+### Endpoints generados
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| `GET` | `/api/libros` | Listar todos (soporta `?buscar=`) |
+| `GET` | `/api/libros/:id` | Obtener uno por ID |
+| `POST` | `/api/libros` | Crear |
+| `PATCH` | `/api/libros/:id` | Actualizar |
+| `DELETE` | `/api/libros/:id` | Eliminar |
+
+---

@@ -1,0 +1,90 @@
+@import "tailwindcss";
+
+
+@theme {
+
+  --color-primary-50: #eefffb;
+  --color-primary-100: #c6fff4;
+  --color-primary-200: #8effeb;
+  --color-primary-300: #4dfbe1;
+  --color-primary-400: #19e8cf;
+  --color-primary-500: #00bca8;
+  --color-primary-600: #00a497;
+  --color-primary-700: #028379;
+  --color-primary-800: #086761;
+  --color-primary-900: #0c5550;
+  --color-primary-950: #003433;
+
+
+  --color-texto-500: #344054;
+
+
+}
+
+
+* {
+  font-family: 'Poppins', sans-serif;
+}
+
+
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  font-family: var(--font-sans);
+}
+
+
+
+
+
+
+
+/* ===================== mis estilos  =======================================*/
+@utility cardPage {
+  @apply bg-white rounded-xl shadow p-4 sm:p-6;
+}
+
+@utility inputField {
+  @apply border border-gray-300 rounded-lg px-4 py-2 text-sm text-gray-700 outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent w-full;
+}
+
+@utility boton {
+  @apply bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors cursor-pointer;
+}
+
+@utility filaTabla {
+  @apply px-4 py-3 text-sm text-gray-700 border-b border-gray-100;
+}
+
+
+@utility inputField_full {
+  @apply border rounded-lg px-4 py-2 text-sm text-gray-700 outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent w-full;
+}
+
+@utility border-colorError {
+  @apply border-red-500;
+}
+
+@utility text-colorError {
+  @apply text-red-500;
+}
+
+
+
+@utility btnModal {
+  @apply bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors cursor-pointer;
+}
+
+@utility btnModalCancelar {
+  @apply bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium px-4 py-2 rounded-lg transition-colors cursor-pointer;
+}
+
+
+/*otros =======================================*/
+

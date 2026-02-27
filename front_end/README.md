@@ -68,12 +68,12 @@ export interface Libro {
 ```typescript
 export const LibroSchema = z.object({
   titulo: z.string().min(1, 'El título es obligatorio'),
-  autor:  z.string().min(1, 'El autor es obligatorio'),
+  autor: z.string().min(1, 'El autor es obligatorio'),
   precio: z.number().positive('El precio debe ser mayor a 0'),
   estado: z.enum(['activo', 'inactivo']),
 });
 
-export type LibroForm = z.infer;
+export type LibroForm = z.infer<typeof LibroSchema>;
 ```
 
 ### 3. Página — `pages/Libros/Libros.tsx`
@@ -82,32 +82,47 @@ const Libros: React.FC = () => {
   const [buscar, setBuscar] = useState('');
   const [debouncedBuscar] = useDebounce(buscar, 1000);
   const [estadoModal, setEstadoModal] = useState(false);
-  const [dataModificar, setDataModificar] = useState(null);
+  const [dataModificar, setDataModificar] = useState<LibroForm | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const { data, isLoading, error, refetch } = useFetchData('/libros', debouncedBuscar);
+  const { data, isLoading, error, refetch } =
+    useFetchData<Libro[]>('/libros', debouncedBuscar);
 
   const handleSuccess = (data: ApiResponse) => {
     ToastFlotanteMediano(data.status, data.message);
     setLoading(false);
     refetch();
   };
+
   const handleError = (error: { message: string; status: number }) => {
     ToastFlotanteMediano(error.status, error.message);
     setLoading(false);
   };
 
-  const registrar = useCreateData('/libros',       { onSuccess: handleSuccess, onError: handleError });
-  const modificar = useUpdateDataManual('/libros',  { onSuccess: handleSuccess, onError: handleError });
-  const eliminar  = useDeleteData('/libros',        { onSuccess: handleSuccess, onError: handleError });
+  const registrar = useCreateData('/libros', {
+    onSuccess: handleSuccess,
+    onError: handleError,
+  });
+
+  const modificar = useUpdateDataManual('/libros', {
+    onSuccess: handleSuccess,
+    onError: handleError,
+  });
+
+  const eliminar = useDeleteData('/libros', {
+    onSuccess: handleSuccess,
+    onError: handleError,
+  });
 
   const handleGuardar = (libro: LibroForm) => {
     setLoading(true);
+
     if (dataModificar) {
       modificar.mutate({ id: dataModificar.id, data: libro });
     } else {
       registrar.mutate(libro);
     }
+
     setEstadoModal(false);
     setDataModificar(null);
   };
@@ -119,64 +134,77 @@ const Libros: React.FC = () => {
     }
   };
 
-  if (isLoading) return ;
-  if (error) return ;
+  if (isLoading) return <div>Cargando...</div>;
+  if (error) return <div>Error al cargar datos</div>;
 
   return (
-    <>
-      {loading && }
-      Gestión de Libros
-      
-        
-          <input
-            type="text"
-            placeholder="Buscar..."
-            value={buscar}
-            onChange={(e) => setBuscar(e.target.value)}
-            className="inputField sm:w-1/3"
-          />
-          <button onClick={() => { setDataModificar(null); setEstadoModal(true); }} className="boton">
-            Nuevo Registro
-          
-        
+    <div className="cardPage">
+      {loading && <div className="spinner">Procesando...</div>}
 
-        <DataTable
-          headers={['ID', 'Título', 'Autor', 'Precio', 'Estado']}
-          data={data || []}
-          itemsPerPage={50}
-          renderRow={(libro) => (
-            <>
-              {libro.id}
-              {libro.titulo}
-              {libro.autor}
-              {libro.precio}
-              
-                <span className={`inline-flex rounded-full py-1 px-3 text-xs font-medium ${
-                  libro.estado === 'activo' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                }`}>
-                  {libro.estado}
-                
-              
-            </>
-          )}
-          renderRowActions={(libro) => (
-            
-              <button
-                onClick={() => { setDataModificar(libro); setEstadoModal(true); }}
-                className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded transition"
-              >
-                Editar
-              
-              <button
-                onClick={() => handleDelete(libro.id)}
-                className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded transition"
-              >
-                Eliminar
-              
-            
-          )}
+      <div className="flex justify-between items-center mb-4">
+        <input
+          type="text"
+          placeholder="Buscar..."
+          value={buscar}
+          onChange={(e) => setBuscar(e.target.value)}
+          className="inputField sm:w-1/3"
         />
-      
+
+        <button
+          onClick={() => {
+            setDataModificar(null);
+            setEstadoModal(true);
+          }}
+          className="boton"
+        >
+          Nuevo Registro
+        </button>
+      </div>
+
+      <DataTable
+        headers={['ID', 'Título', 'Autor', 'Precio', 'Estado']}
+        data={data || []}
+        itemsPerPage={50}
+        renderRow={(libro) => (
+          <>
+            <td>{libro.id}</td>
+            <td>{libro.titulo}</td>
+            <td>{libro.autor}</td>
+            <td>{libro.precio}</td>
+            <td>
+              <span
+                className={`inline-flex rounded-full py-1 px-3 text-xs font-medium ${
+                  libro.estado === 'activo'
+                    ? 'bg-green-100 text-green-700'
+                    : 'bg-red-100 text-red-700'
+                }`}
+              >
+                {libro.estado}
+              </span>
+            </td>
+          </>
+        )}
+        renderRowActions={(libro) => (
+          <>
+            <button
+              onClick={() => {
+                setDataModificar(libro);
+                setEstadoModal(true);
+              }}
+              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded transition"
+            >
+              Editar
+            </button>
+
+            <button
+              onClick={() => handleDelete(libro.id)}
+              className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded transition"
+            >
+              Eliminar
+            </button>
+          </>
+        )}
+      />
 
       {estadoModal && (
         <FormularioLibros
@@ -186,9 +214,11 @@ const Libros: React.FC = () => {
           onSave={handleGuardar}
         />
       )}
-    </>
+    </div>
   );
 };
+
+export default Libros;
 ```
 
 ### 4. Formulario — `pages/Libros/FormularioLibros.tsx`
@@ -196,65 +226,110 @@ const Libros: React.FC = () => {
 interface LibroModalProps {
   isOpen: boolean;
   cerrarModal: () => void;
-  dataModificar?: Partial;
+  dataModificar?: Partial<LibroForm>;
   onSave: (data: LibroForm) => void;
 }
 
-const FormularioLibros: React.FC = ({ isOpen, cerrarModal, dataModificar, onSave }) => {
-  const { register, handleSubmit, reset, formState: { errors } } = useForm({
+const FormularioLibros: React.FC<LibroModalProps> = ({
+  isOpen,
+  cerrarModal,
+  dataModificar,
+  onSave,
+}) => {
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<LibroForm>({
     resolver: zodResolver(LibroSchema),
     defaultValues: { estado: 'activo' },
   });
 
-  // Carga los datos al editar; limpia el formulario al crear
+  // Carga datos si es edición
   useEffect(() => {
     if (dataModificar) {
       reset({
-        titulo:  dataModificar.titulo  ?? '',
-        autor:   dataModificar.autor   ?? '',
-        precio:  dataModificar.precio  ?? 0,
-        estado:  dataModificar.estado  ?? 'activo',
+        titulo: dataModificar.titulo ?? '',
+        autor: dataModificar.autor ?? '',
+        precio: dataModificar.precio ?? 0,
+        estado: dataModificar.estado ?? 'activo',
       });
     } else {
       reset({ estado: 'activo' });
     }
   }, [dataModificar, reset]);
 
-  const onSubmit = (data: LibroForm) => { onSave(data); cerrarModal(); };
+  const onSubmit = (data: LibroForm) => {
+    onSave(data);
+    cerrarModal();
+  };
+
+  if (!isOpen) return null;
 
   return (
-    
-      
-        
-          
-            <InputField name="titulo" type="text" register={register('titulo')} error={errors.titulo} />
-          
-          
-            <InputField name="autor" type="text" register={register('autor')} error={errors.autor} />
-          
-        
-        
-          
-            <InputField name="precio" type="number" register={register('precio', { valueAsNumber: true })} error={errors.precio} />
-          
-          
-            <SelectField
-              label="Estado"
-              name="estado"
-              register={register('estado')}
-              error={errors.estado}
-              options={[{ value: 'activo', label: 'Activo' }, { value: 'inactivo', label: 'Inactivo' }]}
-            />
-          
-        
-        
-          Cancelar
-          {dataModificar ? 'Actualizar' : 'Guardar'}
-        
-      
-    
+    <div className="modalOverlay">
+      <div className="modalContent">
+        <h2 className="text-lg font-semibold mb-4">
+          {dataModificar ? 'Editar Libro' : 'Nuevo Libro'}
+        </h2>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <InputField
+            name="titulo"
+            type="text"
+            register={register('titulo')}
+            error={errors.titulo}
+          />
+
+          <InputField
+            name="autor"
+            type="text"
+            register={register('autor')}
+            error={errors.autor}
+          />
+
+          <InputField
+            name="precio"
+            type="number"
+            register={register('precio', { valueAsNumber: true })}
+            error={errors.precio}
+          />
+
+          <SelectField
+            label="Estado"
+            name="estado"
+            register={register('estado')}
+            error={errors.estado}
+            options={[
+              { value: 'activo', label: 'Activo' },
+              { value: 'inactivo', label: 'Inactivo' },
+            ]}
+          />
+
+          <div className="flex justify-end gap-2 pt-4">
+            <button
+              type="button"
+              onClick={cerrarModal}
+              className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300"
+            >
+              Cancelar
+            </button>
+
+            <button
+              type="submit"
+              className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
+            >
+              {dataModificar ? 'Actualizar' : 'Guardar'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 };
+
+export default FormularioLibros;
 ```
 
 ### 5. Ruta — `src/routes/Rutas.tsx`

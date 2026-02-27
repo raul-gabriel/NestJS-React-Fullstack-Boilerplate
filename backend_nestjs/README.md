@@ -151,6 +151,15 @@ export class CreateLibroDto {
 
 
 
+### libros.module.ts
+```typescript
+imports: [TypeOrmModule.forFeature([libros])],
+```
+
+
+
+
+
 ### Controlador
 ```typescript
 @Auth(UserRole.ADMIN, UserRole.EDITOR)
@@ -189,7 +198,9 @@ export class LibrosController {
 ```typescript
 @Injectable()
 export class LibrosService {
-  constructor(@InjectRepository(Libro) private repo: Repository) {}
+ 
+constructor(@InjectRepository(Libro)private readonly repo: Repository<Libro>){}
+
 
   async findAll(buscar?: string) {
     // Si hay búsqueda, filtra por titulo o autor; si no, devuelve todos

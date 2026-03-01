@@ -101,28 +101,34 @@ const ComboBox2 = forwardRef(
     return (
       <div className="mb-4 relative" ref={dropdownRef}>
         {label && (
-          <label className="block text-[14px] font-medium text-gray-900 dark:text-gray-100">
+          <label className="block text-[14px] font-medium text-gray-900">
             {label}
           </label>
         )}
+
         <div
-          className={`inputField_full mb-0 mt-0 ${error ? "border-colorError" : "border-gray-300"
-            } ${className}`}
-          //onClick={() => setIsOpen(true)} 
-          onClick={() => setIsOpen((prev) => !prev)}>
-          {/* Input Visible */}
+          className={`relative inputField_full mb-0 mt-0 border 
+      ${error ? "border-red-500" : "border-gray-300"} 
+      ${className}`}
+          onClick={() => setIsOpen((prev) => !prev)}
+        >
+          {/* Input oculto para react-hook-form */}
           <input
             {...register}
-            value={selectedValue} // Valor enviado al formulario
-            hidden // Ocultar el input nativo de react-hook-form
+            value={selectedValue}
+            hidden
           />
+
+          {/* Input visible */}
           <input
-            value={selectedLabel} // Texto visible en el input
+            value={selectedLabel}
             readOnly
-            placeholder={placeholder || `Seleccione una opcion`}
-            className="w-full outline-none bg-transparent cursor-pointer text-gray-900 dark:text-gray-100"
+            placeholder={placeholder || "Seleccione una opción"}
+            className="w-full outline-none bg-transparent cursor-pointer text-gray-900"
           />
-          <span className="absolute right-3 mt-3 transform -translate-y-1/2 text-gray-500 dark:text-gray-400">
+
+          {/* Icono */}
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width={24}
@@ -132,26 +138,27 @@ const ComboBox2 = forwardRef(
               <path
                 fill="currentColor"
                 d="m6 9.657l1.414 1.414l4.243-4.243l4.243 4.243l1.414-1.414L11.657 4zm0 4.786l1.414-1.414l4.243 4.243l4.243-4.243l1.414 1.414l-5.657 5.657z"
-              ></path>
+              />
             </svg>
           </span>
         </div>
 
         {/* Dropdown */}
         {isOpen && (
-          <div className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-60 overflow-y-auto">
-            <div className="p-2">
+          <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+            <div className="p-2 border-b border-gray-200">
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Buscar..."
-                className="w-full border border-gray-300 dark:border-gray-600 rounded-md p-2 text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-300 rounded-md p-2 text-gray-900 bg-gray-50 outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
+
             <ul>
               {loading ? (
-                <li className="p-2 text-gray-500 dark:text-gray-400">
+                <li className="p-2 text-gray-500">
                   Cargando...
                 </li>
               ) : options.length > 0 ? (
@@ -159,13 +166,13 @@ const ComboBox2 = forwardRef(
                   <li
                     key={option.value}
                     onClick={() => handleSelect(option.value, option.label)}
-                    className="p-2 cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900 text-gray-900 dark:text-gray-100"
+                    className="p-2 cursor-pointer hover:bg-blue-100 text-gray-900 transition-colors"
                   >
                     {option.label}
                   </li>
                 ))
               ) : (
-                <li className="p-2 text-gray-500 dark:text-gray-400">
+                <li className="p-2 text-gray-500">
                   No se encontraron opciones
                 </li>
               )}
@@ -174,7 +181,9 @@ const ComboBox2 = forwardRef(
         )}
 
         {error && (
-          <p className="text-colorError text-[12px] mt-1">{error.message}</p>
+          <p className="text-red-500 text-[12px] mt-1">
+            {error.message}
+          </p>
         )}
       </div>
     );

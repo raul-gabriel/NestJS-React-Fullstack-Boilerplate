@@ -21,15 +21,18 @@ const Switcher2: React.FC<Switcher2Props> = ({ options, name, onChange }) => {
         htmlFor={name || "switcher2"}
         className="flex cursor-pointer select-none items-center"
       >
-        <div className="relative flex rounded-full bg-gray-300 dark:bg-gray-700 p-1 transition-all duration-300">
+        <div className="relative flex rounded-full bg-gray-300 p-1 transition-all duration-300">
           {options.map((option) => (
             <div
               key={option}
-              className={`relative flex items-center justify-center px-4 py-2 text-sm font-semibold rounded-full transition-all duration-300 cursor-pointer ${selected === option
-                  ? "bg-primario-claro-100 text-white"
-                  : "text-gray-700 dark:text-gray-300"
-                }`}
               onClick={toggleOption}
+              className={`relative flex items-center justify-center 
+            px-4 py-2 text-sm font-semibold 
+            rounded-full transition-all duration-300 cursor-pointer
+            ${selected === option
+                  ? "bg-blue-600 text-white shadow-sm"
+                  : "text-gray-700 hover:bg-gray-200"
+                }`}
             >
               {option}
             </div>

@@ -8,14 +8,14 @@ type Option = {
 interface ComboBoxProps {
   options: Option[];
   placeholder?: string;
-  buttonStyle?: string; // Estilo personalizado para el botón
+  className?: string; // Estilo personalizado para el botón
   onSelect?: (value: string) => void; // Callback para enviar el valor seleccionado
 }
 
 const ComboBox: React.FC<ComboBoxProps> = ({
   options,
   placeholder = "Select an option...",
-  buttonStyle = "",
+  className = "",
   onSelect,
 }) => {
   const [isOpen, setIsOpen] = useState(false); // Estado para abrir/cerrar el dropdown
@@ -49,15 +49,20 @@ const ComboBox: React.FC<ComboBoxProps> = ({
   };
 
   return (
-    <div className="relative w-64" ref={dropdownRef}>
+    <div className={`relative w-64 ${className}`} ref={dropdownRef}>
       {/* Botón principal */}
       <button
         onClick={() => setIsOpen((prev) => !prev)}
-        className={`w-full flex items-center justify-between border rounded-md p-2
-        text-left bg-white text-gray-900 shadow-sm focus:ring-2 focus:ring-blue-500
-        ${buttonStyle}`} // Estilos personalizados
+        className="w-full flex items-center justify-between 
+               border border-gray-300 rounded-md p-2
+               text-left bg-white text-gray-900 
+               shadow-sm hover:bg-gray-50
+               focus:outline-none focus:ring-2 focus:ring-blue-500"
       >
-        {selected?.label || placeholder}
+        <span className="truncate">
+          {selected?.label || placeholder}
+        </span>
+
         <span className="ml-2 text-gray-500">
           {isOpen ? "▲" : "▼"}
         </span>
@@ -66,17 +71,22 @@ const ComboBox: React.FC<ComboBoxProps> = ({
       {/* Dropdown */}
       {isOpen && (
         <div
-          className={`absolute z-10 mt-2 w-full rounded-md shadow-lg
-          bg-white border border-gray-300 max-h-60 overflow-hidden`}
+          className="absolute z-10 mt-2 w-full 
+                 rounded-md shadow-lg
+                 bg-white border border-gray-300
+                 max-h-60 overflow-hidden"
         >
           {/* Input de búsqueda */}
-          <div className="p-2">
+          <div className="p-2 border-b border-gray-200">
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search..."
-              className="w-full border border-gray-300 rounded-md p-2 text-gray-900 bg-gray-50 outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Buscar..."
+              className="w-full border border-gray-300 
+                     rounded-md p-2 text-gray-900 
+                     bg-gray-50
+                     focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
@@ -87,13 +97,18 @@ const ComboBox: React.FC<ComboBoxProps> = ({
                 <li
                   key={option.value}
                   onClick={() => handleSelect(option)}
-                  className="p-2 cursor-pointer hover:bg-blue-100 text-gray-900"
+                  className="p-2 cursor-pointer 
+                         text-gray-900
+                         hover:bg-blue-100
+                         transition-colors"
                 >
                   {option.label}
                 </li>
               ))
             ) : (
-              <li className="p-2 text-gray-500">No options found</li>
+              <li className="p-2 text-gray-500">
+                No hay opciones
+              </li>
             )}
           </ul>
         </div>

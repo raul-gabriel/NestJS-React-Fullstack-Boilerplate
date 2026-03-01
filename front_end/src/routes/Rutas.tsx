@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 
-import Loader from '@/components/globales/Loader';
 import HomeDasboard from '@/pages/home/Home';
 import ProtectedRoute from './ProtectedRoute';
 import Login from '@/pages/Login';
@@ -10,6 +9,7 @@ import Usuarios from '@/pages/usuarios/Usuarios';
 import { setNavigate } from '@/lib/hooks/navigation';
 import AdminLayout from '@/Layouts/AdminLayout';
 import Perfil from '@/pages/usuarios/Perfil';
+import Preloader from '@/components/globales/Preloader';
 
 
 function Rutas() {
@@ -30,7 +30,7 @@ function Rutas() {
   }, []);
 
   if (loading) {
-    return <Loader />;
+    return <Preloader />;
   }
 
   return (
@@ -47,7 +47,7 @@ function Rutas() {
             <Route path="home" element={<HomeDasboard />} />
             <Route path="usuarios" element={<Usuarios />} />
             <Route path="perfil" element={<Perfil />} />
-          
+           
 
           </Route>
         </Route>

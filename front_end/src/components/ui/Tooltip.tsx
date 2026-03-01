@@ -92,18 +92,29 @@ export const Tooltip: React.FC<TooltipProps> = ({ tooltipContent, children }) =>
       onClick={handleClick}
     >
       {children}
+
       {visible && (
         <div
-          className="absolute z-50 bottom-full mb-2 px-3 py-2 bg-gray-700 text-white text-sm rounded-md shadow-lg whitespace-pre-wrap"
-          style={{ maxWidth: '400px', ...tooltipStyle }}
+          className="absolute z-50 bottom-full mb-2 
+                 px-3 py-2 
+                 bg-white text-gray-900 
+                 text-sm rounded-md shadow-lg 
+                 border border-gray-300
+                 whitespace-pre-wrap"
+          style={{ maxWidth: "400px", ...tooltipStyle }}
         >
+          {/* Botón cerrar */}
           <button
             onClick={handleCloseClick}
-            className="absolute top-1 right-1 text-xs text-gray-400 hover:text-white"
+            className="absolute top-1 right-2 text-xs text-gray-400 hover:text-gray-700 transition-colors"
           >
             ×
           </button>
-          <pre>{tooltipContent}</pre>
+
+          {/* Contenido */}
+          <pre className="font-sans text-sm whitespace-pre-wrap">
+            {tooltipContent}
+          </pre>
         </div>
       )}
     </div>

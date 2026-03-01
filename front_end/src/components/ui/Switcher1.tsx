@@ -38,30 +38,44 @@ const Switcher1: React.FC<Switcher1Props> = ({
   return (
     <div className={`mb-4 ${className}`}>
       {/* Etiqueta opcional */}
-      {label && <label className="block text-sm font-medium mb-2">{label}</label>}
+      {label && (
+        <label className="block text-sm font-medium mb-2 text-gray-900">
+          {label}
+        </label>
+      )}
 
       {/* Switcher principal */}
       <div
         role="button"
         tabIndex={0}
-        className="relative flex items-center h-8 w-28 rounded-full cursor-pointer bg-gray-300 dark:bg-gray-700"
+        className="relative flex items-center h-8 w-28 
+               rounded-full cursor-pointer 
+               bg-gray-300 
+               transition-colors"
         onClick={handleToggle}
-        onKeyDown={(e) => e.key === 'Enter' && handleToggle()}
+        onKeyDown={(e) => e.key === "Enter" && handleToggle()}
       >
         {/* Indicador dinámico */}
         <div
-          className={`absolute top-1 h-6 w-1/2 rounded-full bg-white dark:bg-gray-800 transition-transform duration-300 ${
-            currentValue === options[1] ? 'translate-x-full' : 'translate-x-0'
-          } flex items-center justify-center`}
+          className={`absolute top-1 left-1 h-6 w-1/2 
+        rounded-full bg-white 
+        shadow-sm
+        transition-transform duration-300 
+        ${currentValue === options[1] ? "translate-x-full" : "translate-x-0"}
+        flex items-center justify-center`}
         >
-          <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+          <span className="text-xs font-semibold text-gray-700">
             {currentValue || options[0]}
           </span>
         </div>
       </div>
 
       {/* Mensaje de error */}
-      {error && <p className="mt-1 text-xs text-red-500">{error.message}</p>}
+      {error && (
+        <p className="mt-1 text-xs text-red-500">
+          {error.message}
+        </p>
+      )}
     </div>
   );
 };

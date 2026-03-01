@@ -78,83 +78,77 @@ export type LibroForm = z.infer<typeof LibroSchema>;
 
 ### 3. Página — `pages/Libros/Libros.tsx`
 ```tsx
+import DataTable from '@/components/ui/DataTable';
+import { useCreateData, useDeleteData, useFetchData, useUpdateDataManual } from '@/lib/hooks/useFetchData';
+import { AlertaConfirmacion, ToastFlotanteMediano } from '@/utils/classes/Toas';
+import type { LibroForm } from '@/utils/schemas/validacion';
+import type { ApiResponse } from '@/utils/types/types_general';
+import { useState } from 'react';
+import { useDebounce } from 'use-debounce';
+import FormularioLibros from './FormularioLibros';
+import type { Libro } from '@/utils/types/Mi_types';
+import { ErrorMessage } from '@/components/globales/ErrorMessage';
+import Preloader from '@/components/globales/Preloader';
+import Loader from '@/components/globales/Loader';
+
 const Libros: React.FC = () => {
   const [buscar, setBuscar] = useState('');
   const [debouncedBuscar] = useDebounce(buscar, 1000);
   const [estadoModal, setEstadoModal] = useState(false);
-  const [dataModificar, setDataModificar] = useState<LibroForm | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [dataModificar, setDataModificar] = useState<LibroForm & { id: number } | null>(null);
 
-  const { data, isLoading, error, refetch } =
-    useFetchData<Libro[]>('/libros', debouncedBuscar);
+  const { data, isLoading, error, refetch } = useFetchData<Libro[]>('/libros', debouncedBuscar);
 
-  const handleSuccess = (data: ApiResponse) => {
-    ToastFlotanteMediano(data.status, data.message);
-    setLoading(false);
+  const handleSuccess = (res: ApiResponse) => {
+    ToastFlotanteMediano(res.status, res.message);
     refetch();
   };
 
-  const handleError = (error: { message: string; status: number }) => {
-    ToastFlotanteMediano(error.status, error.message);
-    setLoading(false);
+  const handleError = (err: { message: string; status: number }) => {
+    ToastFlotanteMediano(err.status, err.message);
   };
 
-  const registrar = useCreateData('/libros', {
-    onSuccess: handleSuccess,
-    onError: handleError,
-  });
+  const registrar = useCreateData('/libros', { onSuccess: handleSuccess, onError: handleError });
+  const modificar = useUpdateDataManual('/libros', { onSuccess: handleSuccess, onError: handleError });
+  const eliminar = useDeleteData('/libros', { onSuccess: handleSuccess, onError: handleError });
 
-  const modificar = useUpdateDataManual('/libros', {
-    onSuccess: handleSuccess,
-    onError: handleError,
-  });
-
-  const eliminar = useDeleteData('/libros', {
-    onSuccess: handleSuccess,
-    onError: handleError,
-  });
+  const isMutating = registrar.isPending || modificar.isPending || eliminar.isPending;
 
   const handleGuardar = (libro: LibroForm) => {
-    setLoading(true);
-
     if (dataModificar) {
       modificar.mutate({ id: dataModificar.id, data: libro });
     } else {
       registrar.mutate(libro);
     }
-
     setEstadoModal(false);
     setDataModificar(null);
   };
 
   const handleDelete = async (id: number) => {
     if (await AlertaConfirmacion('¿Deseas eliminar este libro?')) {
-      setLoading(true);
       eliminar.mutate(id);
     }
   };
 
-  if (isLoading) return <div>Cargando...</div>;
-  if (error) return <div>Error al cargar datos</div>;
+  if (isLoading) return <Preloader />;
+  if (error) return <ErrorMessage message={error.message} />;
 
   return (
     <div className="cardPage">
-      {loading && <div className="spinner">Procesando...</div>}
+      {isMutating && <Loader />}
 
-      <div className="flex justify-between items-center mb-4">
+      <h1 className="titulo">Gestión de Libros</h1>
+
+      <div className="flex justify-between mb-4">
         <input
           type="text"
-          placeholder="Buscar..."
+          placeholder="Buscar libro..."
           value={buscar}
           onChange={(e) => setBuscar(e.target.value)}
           className="inputField sm:w-1/3"
         />
-
         <button
-          onClick={() => {
-            setDataModificar(null);
-            setEstadoModal(true);
-          }}
+          onClick={() => { setDataModificar(null); setEstadoModal(true); }}
           className="boton"
         >
           Nuevo Registro
@@ -172,38 +166,34 @@ const Libros: React.FC = () => {
             <td>{libro.autor}</td>
             <td>{libro.precio}</td>
             <td>
-              <span
-                className={`inline-flex rounded-full py-1 px-3 text-xs font-medium ${
-                  libro.estado === 'activo'
-                    ? 'bg-green-100 text-green-700'
-                    : 'bg-red-100 text-red-700'
-                }`}
-              >
+              <span className={`inline-flex rounded-full py-1 px-3 text-xs font-medium ${
+                libro.estado === 'activo'
+                  ? 'bg-green-100 text-green-700'
+                  : 'bg-red-100 text-red-700'
+              }`}>
                 {libro.estado}
               </span>
             </td>
           </>
         )}
-        renderRowActions={(libro) => (
-          <>
-            <button
-              onClick={() => {
-                setDataModificar(libro);
-                setEstadoModal(true);
-              }}
-              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded transition"
-            >
-              Editar
-            </button>
-
-            <button
-              onClick={() => handleDelete(libro.id)}
-              className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded transition"
-            >
-              Eliminar
-            </button>
-          </>
-        )}
+        renderRowActions={(item) => (
+                    <>
+                        <div>
+                            <button
+                                onClick={() => { setDataModificar(item); setEstadoModal(true); }}
+                                className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded transition"
+                            >
+                                Editar
+                            </button>
+                            <button
+                                onClick={() => handleDelete(item.id)}
+                                className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded transition"
+                            >
+                                Eliminar
+                            </button>
+                        </div>
+                    </>
+                )}
       />
 
       {estadoModal && (

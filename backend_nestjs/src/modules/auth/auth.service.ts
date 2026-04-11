@@ -45,11 +45,11 @@ export class AuthService {
     });
 
     // Guarda el token en cookie HttpOnly
-    res.cookie('access_token', access_token, {
+     res.cookie('access_token', access_token, {
       httpOnly: true,
-      secure: true,
-      sameSite: 'strict',
-      maxAge: 1000 * 60 * 60 * 8, // 8 horas en milisegundos
+      secure: process.env.NODE_ENV === 'production', // solo HTTPS en producción
+      sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+      maxAge: 1000 * 60 * 60 * 8,
     });
 
     //retornar datos del usuario para el frontend
@@ -68,8 +68,8 @@ export class AuthService {
   logout(res: Response): { message: string } {
     res.clearCookie('access_token', {
       httpOnly: true,
-      secure: true,
-      sameSite: 'strict',
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
     });
     return { message: 'Sesión cerrada' };
   }

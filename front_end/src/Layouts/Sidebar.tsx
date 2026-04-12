@@ -42,6 +42,7 @@ const menuItems: MenuItem[] = [
     badge: 3,
     children: [
       { id: 'usuarios', label: 'Usuarios', href: '/panel/usuarios' },
+      { id: 'usuarios-paginado', label: 'Usuarios Paginado', href: '/panel/usuarios-paginado' },
       { id: 'empresa', label: 'Empresa', href: '/panel/empresa' },
     ],
   },

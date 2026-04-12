@@ -28,10 +28,20 @@ export class UsuariosController {
 
 
   @Auth(UserRole.ADMIN)
+  @Get('/paginado')
+  findAllPaginado( @Query('buscar') buscar?: string,@Query('page') page = '1',@Query('limit') limit = '10') {
+    return this.usuariosService.findAllPaginado(buscar, Number(page), Number(limit));
+  }
+
+
+  @Auth(UserRole.ADMIN)
   @Get()
   async findAll(@Query('buscar') buscar?: string) {
     return this.usuariosService.findAll(buscar);
   }
+
+
+
 
   @Auth()
   @Get(':id')

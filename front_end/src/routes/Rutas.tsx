@@ -10,6 +10,7 @@ import { setNavigate } from '@/lib/hooks/navigation';
 import AdminLayout from '@/Layouts/AdminLayout';
 import Perfil from '@/pages/usuarios/Perfil';
 import Preloader from '@/components/globales/Preloader';
+import Usuarios_paginado from '@/pages/usuarios/Usuarios_paginado';
 
 
 function Rutas() {
@@ -46,8 +47,9 @@ function Rutas() {
             <Route index element={<HomeDasboard />} />
             <Route path="home" element={<HomeDasboard />} />
             <Route path="usuarios" element={<Usuarios />} />
+            <Route path="usuarios-paginado" element={<Usuarios_paginado />} />
             <Route path="perfil" element={<Perfil />} />
-           
+          
 
           </Route>
         </Route>

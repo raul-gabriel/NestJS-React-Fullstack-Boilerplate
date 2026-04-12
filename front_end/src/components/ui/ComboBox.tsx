@@ -8,30 +8,28 @@ type Option = {
 interface ComboBoxProps {
   options: Option[];
   placeholder?: string;
-  className?: string; // Estilo personalizado para el botón
-  onSelect?: (value: string) => void; // Callback para enviar el valor seleccionado
+  className?: string;
+  onSelect?: (value: string) => void;
 }
 
 const ComboBox: React.FC<ComboBoxProps> = ({
   options,
-  placeholder = "Select an option...",
+  placeholder = "Seleccione una opción",
   className = "",
   onSelect,
 }) => {
-  const [isOpen, setIsOpen] = useState(false); // Estado para abrir/cerrar el dropdown
-  const [search, setSearch] = useState(""); // Texto de búsqueda
-  const [selected, setSelected] = useState<Option | null>(null); // Opción seleccionada
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [selected, setSelected] = useState<Option | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const dropdownRef = useRef<HTMLDivElement>(null); // Referencia para clics fuera del componente
-
-  const filteredOptions = options.filter((option) =>
-    option.label.toLowerCase().includes(search.toLowerCase())
+  const filteredOptions = options.filter((o) =>
+    o.label.toLowerCase().includes(search.toLowerCase())
   );
 
-  // Cerrar el dropdown al hacer clic fuera
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setIsOpen(false);
       }
     };
@@ -43,72 +41,54 @@ const ComboBox: React.FC<ComboBoxProps> = ({
     setSelected(option);
     setSearch("");
     setIsOpen(false);
-    if (onSelect) {
-      onSelect(option.value); // Envía el valor seleccionado al callback
-    }
+    onSelect?.(option.value);
   };
 
   return (
-    <div className={`relative w-64 ${className}`} ref={dropdownRef}>
-      {/* Botón principal */}
-      <button
-        onClick={() => setIsOpen((prev) => !prev)}
-        className="w-full flex items-center justify-between 
-               border border-gray-300 rounded-md p-2
-               text-left bg-white text-gray-900 
-               shadow-sm hover:bg-gray-50
-               focus:outline-none focus:ring-2 focus:ring-blue-500"
+    <div className={`relative ${className}`} ref={dropdownRef}>
+      {/* Input visible */}
+      <div
+        className="relative inputField mb-0 mt-0 cursor-pointer"
+        onClick={() => setIsOpen((p) => !p)}
       >
-        <span className="truncate">
-          {selected?.label || placeholder}
+        <input
+          value={selected?.label ?? ""}
+          readOnly
+          placeholder={placeholder}
+          className="w-full outline-none bg-transparent cursor-pointer text-gray-900"
+        />
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
+          <svg xmlns="http://www.w3.org/2000/svg" width={24} height={24} viewBox="0 0 24 24">
+            <path fill="currentColor" d="m6 9.657l1.414 1.414l4.243-4.243l4.243 4.243l1.414-1.414L11.657 4zm0 4.786l1.414-1.414l4.243 4.243l4.243-4.243l1.414 1.414l-5.657 5.657z" />
+          </svg>
         </span>
-
-        <span className="ml-2 text-gray-500">
-          {isOpen ? "▲" : "▼"}
-        </span>
-      </button>
+      </div>
 
       {/* Dropdown */}
       {isOpen && (
-        <div
-          className="absolute z-10 mt-2 w-full 
-                 rounded-md shadow-lg
-                 bg-white border border-gray-300
-                 max-h-60 overflow-hidden"
-        >
-          {/* Input de búsqueda */}
+        <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-hidden">
           <div className="p-2 border-b border-gray-200">
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar..."
-              className="w-full border border-gray-300 
-                     rounded-md p-2 text-gray-900 
-                     bg-gray-50
-                     focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 rounded-md p-2 text-gray-900 bg-gray-50 outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-
-          {/* Opciones */}
           <ul className="max-h-40 overflow-y-auto">
             {filteredOptions.length > 0 ? (
-              filteredOptions.map((option) => (
+              filteredOptions.map((o) => (
                 <li
-                  key={option.value}
-                  onClick={() => handleSelect(option)}
-                  className="p-2 cursor-pointer 
-                         text-gray-900
-                         hover:bg-blue-100
-                         transition-colors"
+                  key={o.value}
+                  onClick={() => handleSelect(o)}
+                  className="p-2 cursor-pointer hover:bg-blue-100 text-gray-900 transition-colors"
                 >
-                  {option.label}
+                  {o.label}
                 </li>
               ))
             ) : (
-              <li className="p-2 text-gray-500">
-                No hay opciones
-              </li>
+              <li className="p-2 text-gray-500">No se encontraron opciones</li>
             )}
           </ul>
         </div>
@@ -118,8 +98,6 @@ const ComboBox: React.FC<ComboBoxProps> = ({
 };
 
 export default ComboBox;
-
-
 
 /*
 const options = [

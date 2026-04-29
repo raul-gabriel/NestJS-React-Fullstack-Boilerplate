@@ -6,7 +6,8 @@ import SobreNosotros from './Components/SobreNosotros'
 interface SubMenuItem {
   id: string
   label: string
-  href: string
+  href: string,
+  show?: boolean
 }
 
 interface MenuItem {
@@ -26,36 +27,43 @@ interface SidebarProps {
   setCollapsed: (v: boolean) => void
 }
 
-const menuItems: MenuItem[] = [
-  {
-    id: 'home',
-    label: 'Home',
-    icon: HomeIcon,
-    href: '/panel/home',
-    show: true,
-  },
-  {
-    id: 'configuración',
-    label: 'Configuración',
-    icon: Settings,
-    show: true,
-    badge: 3,
-    children: [
-      { id: 'usuarios', label: 'Usuarios', href: '/panel/usuarios' },
-      { id: 'usuarios-paginado', label: 'Usuarios Paginado', href: '/panel/usuarios-paginado' },
-      { id: 'empresa', label: 'Empresa', href: '/panel/empresa' },
-    ],
-  },
 
-
-
-
-
-]
-
-const visibleItems = menuItems.filter(i => i.show !== false)
 
 const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, collapsed }) => {
+
+
+
+
+  const menuItems: MenuItem[] = [
+    {
+      id: 'home',
+      label: 'Home',
+      icon: HomeIcon,
+      href: '/panel/home',
+      show: true,
+    },
+    {
+      id: 'configuración',
+      label: 'Configuración',
+      icon: Settings,
+      show: true,
+      badge: 3,
+      children: [
+        { id: 'usuarios', label: 'Usuarios', href: '/panel/usuarios' },
+        { id: 'usuarios-paginado', label: 'Usuarios Paginado', href: '/panel/usuarios-paginado' },
+        { id: 'empresa', label: 'Empresa', href: '/panel/empresa' },
+      ],
+    },
+
+
+
+
+
+  ]
+
+  const visibleItems = menuItems.filter(i => i.show !== false)
+
+  //============================== configuracion ===============
   const location = useLocation()
   const hoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [hovered, setHovered] = useState(false)
@@ -299,12 +307,17 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, collapse
                       }}
                     >
                       <div className="ml-8 mt-0.5 mb-1 flex flex-col gap-0.5 border-l-2 border-slate-100 pl-3">
-                        {item.children!.map((child) => (
+
+                        {item.children!.filter(child => child.show !== false).map((child) => (
                           <NavLink
                             key={child.id}
                             to={child.href}
                             end
                             onClick={() => setSidebarOpen(false)}
+                            style={{
+                              maxHeight: isOpen ? `${(item.children?.filter(c => c.show !== false).length ?? 0) * 44}px` : "0px",
+                              opacity: isOpen ? 1 : 0,
+                            }}
                             className={({ isActive }) =>
                               `rounded-md px-2.5 py-2 text-sm whitespace-nowrap transition-colors duration-150 ${isActive
                                 ? "bg-primary-600 text-white font-semibold"
@@ -315,6 +328,8 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, collapse
                             {child.label}
                           </NavLink>
                         ))}
+
+
                       </div>
                     </div>
                   )}

@@ -27,10 +27,15 @@ export const useFetchDataById = <T>(url: string, id: number) =>
     enabled: id > 0,
   });
 
-export const useCreateData = <TBody = unknown>(url: string, options?: MutationOptions) => {
+interface MutationOptions<TData = ApiResponse> {
+  onSuccess?: (data: TData) => void;
+  onError?: (error: { message: string; status: number }) => void;
+}
+
+export const useCreateData = <TBody = unknown, TData = ApiResponse>(url: string, options?: MutationOptions<TData>) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: TBody) => createData(url, data),
+    mutationFn: (data: TBody) => createData(url, data) as Promise<TData>,
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: [url] });
       options?.onSuccess?.(data);

@@ -27,11 +27,15 @@ export class UsuariosController {
   }
 
 
+
+  //get con pagiancion y filtro
   @Auth(UserRole.ADMIN)
-  @Get('/paginado')
-  findAllPaginado( @Query('buscar') buscar?: string,@Query('page') page = '1',@Query('limit') limit = '10') {
-    return this.usuariosService.findAllPaginado(buscar, Number(page), Number(limit));
+  @Get('paginado')
+  findAllPaginado(@Query('buscar') buscar?: string, @Query('estado') estado?: 'activo' | 'inactivo', @Query('page') page = 1, @Query('limit') limit = 10) {
+    return this.usuariosService.findAll(buscar, estado, +page, +limit);
   }
+
+
 
 
   @Auth(UserRole.ADMIN)

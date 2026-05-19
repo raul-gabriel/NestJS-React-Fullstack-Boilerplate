@@ -3,7 +3,7 @@ import { ActualizarPerfilDto, CreateUsuarioDto } from './dto/create-usuario.dto'
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Usuario } from './entities/usuario.entity';
-import { Like, Repository } from 'typeorm';
+import { FindOptionsWhere, Like, Repository } from 'typeorm';
 import * as crypto from 'crypto';
 
 @Injectable()
@@ -11,21 +11,33 @@ export class UsuariosService {
   constructor(@InjectRepository(Usuario) private repo: Repository<Usuario>) { }
 
 
-  async findAll(buscar?: string) {
-    const where = buscar
-      ? [
-        { nombres: Like(`%${buscar}%`) },
-        { email: Like(`%${buscar}%`) },
+async findAll(buscar?: string, estado?: 'activo' | 'inactivo', page = 1, limit = 10) {
+  const skip = (page - 1) * limit;
+
+  const where: FindOptionsWhere<Usuario>[] | FindOptionsWhere<Usuario> = buscar
+    ? [
+        { nombres: Like(`%${buscar}%`), ...(estado ? { estado } : {}) },
+        { email:   Like(`%${buscar}%`), ...(estado ? { estado } : {}) },
       ]
-      : {};
 
-    return await this.repo.find({
-      select: ['id', 'nombres', 'email', 'telefono', 'estado', 'tipo_usuario'],
-      where,
-      order: { id: 'ASC' },
-    });
-  }
+      //filtro si hay este... 
+    : estado? { estado }: {};
 
+  const [data, total] = await this.repo.findAndCount({
+    select: ['id', 'nombres', 'email', 'telefono', 'estado', 'tipo_usuario'],
+    where,
+    order: { id: 'ASC' },
+    take: limit,
+    skip,
+  });
+
+  return {
+    data,
+    total,
+    page,
+    lastPage: Math.ceil(total / limit),
+  };
+}
 
   async findAllPaginado(buscar?: string, page = 1, limit = 10) {
     const skip = (page - 1) * limit;

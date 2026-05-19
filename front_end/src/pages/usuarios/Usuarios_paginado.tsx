@@ -14,31 +14,34 @@ import { ErrorMessage } from '@/components/globales/ErrorMessage';
 const Usuarios_paginado: React.FC = () => {
   const [buscar, setBuscar] = useState('');
   const [debouncedBuscar] = useDebounce(buscar, 1000);
+  const [estado, setEstado] = useState<'activo' | 'inactivo' | undefined>(undefined);
   const [estadoModal, setEstadoModal] = useState(false);
   const [dataModificar, setDataModificar] = useState<Usuario | null>(null);
-  const [loading, setLoading] = useState(false);
 
   const {
     data, total, page, lastPage,
     isLoading, error, refetch, setPage,
-  } = usePaginatedData<Usuario>('/usuarios/paginado', debouncedBuscar, { limit: 10 });
+  } = usePaginatedData<Usuario>('/usuarios/paginado', debouncedBuscar, {
+    limit: 10,
+    filters: { estado },
+  });
 
   const handleSuccess = (data: ApiResponse) => {
     ToastFlotanteMediano(data.status, data.message);
-    setLoading(false);
     refetch();
   };
+
   const handleError = (error: { message: string; status: number }) => {
     ToastFlotanteMediano(error.status, error.message);
-    setLoading(false);
   };
 
   const registrar = useCreateData('/usuarios', { onSuccess: handleSuccess, onError: handleError });
   const modificar = useUpdateDataManual('/usuarios', { onSuccess: handleSuccess, onError: handleError });
-  const eliminar  = useDeleteData('/usuarios',  { onSuccess: handleSuccess, onError: handleError });
+  const eliminar = useDeleteData('/usuarios', { onSuccess: handleSuccess, onError: handleError });
+
+  const isMutating = registrar.isPending || modificar.isPending || eliminar.isPending;
 
   const handleGuardarModificar = (usuario: UsuarioForm) => {
-    setLoading(true);
     if (dataModificar) {
       modificar.mutate({ id: dataModificar.id, data: usuario });
     } else {
@@ -50,33 +53,44 @@ const Usuarios_paginado: React.FC = () => {
 
   const handleDelete = async (id: number) => {
     if (await AlertaConfirmacion('¿Deseas eliminar este usuario?')) {
-      setLoading(true);
       eliminar.mutate(id);
     }
   };
 
   if (isLoading) return <Preloader />;
-  if (error)     return <ErrorMessage message={error} />;
+  if (error) return <ErrorMessage message={error} />;
 
   return (
     <>
-      {loading && <Preloader />}
+      {isMutating && <Preloader />}
+
       <h1 className="mt-4 text-2xl sm:text-3xl font-bold text-center text-gray-900 mb-4 sm:mb-6">
         Gestión de Usuarios
       </h1>
 
       <div className="cardPage">
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
+        <div className="flex flex-wrap gap-3 mb-4">
           <input
             type="text"
             placeholder="Buscar..."
             value={buscar}
             onChange={(e) => setBuscar(e.target.value)}
-            className="inputField sm:w-3/4 lg:w-1/2 xl:w-1/3"
+            className="inputField sm:w-64"
           />
+
+          <select
+            value={estado ?? ''}
+            onChange={(e) => setEstado((e.target.value as 'activo' | 'inactivo') || undefined)}
+            className="inputField w-auto"
+          >
+            <option value="">Todos los estados</option>
+            <option value="activo">Activo</option>
+            <option value="inactivo">Inactivo</option>
+          </select>
+
           <button
             onClick={() => { setDataModificar(null); setEstadoModal(true); }}
-            className="boton sm:w-auto w-full mt-4 sm:mt-0"
+            className="boton ml-auto"
           >
             Nuevo Registro
           </button>
@@ -98,11 +112,10 @@ const Usuarios_paginado: React.FC = () => {
               <td className="filaTabla">{usuario.telefono}</td>
               <td className="filaTabla">{usuario.tipo_usuario}</td>
               <td className="filaTabla">
-                <span className={`inline-flex rounded-full py-1 px-3 text-xs font-medium ${
-                  usuario.estado === 'activo'
+                <span className={`inline-flex rounded-full py-1 px-3 text-xs font-medium ${usuario.estado === 'activo'
                     ? 'bg-green-100 text-green-700'
                     : 'bg-red-100 text-red-700'
-                }`}>
+                  }`}>
                   {usuario.estado}
                 </span>
               </td>
@@ -135,16 +148,14 @@ const Usuarios_paginado: React.FC = () => {
         />
       </div>
 
-      <div className="p-4">
-        {estadoModal && (
-          <FormularioUsuarios
-            isOpen={estadoModal}
-            cerrarModal={() => setEstadoModal(false)}
-            dataModificar={dataModificar || undefined}
-            onSave={handleGuardarModificar}
-          />
-        )}
-      </div>
+      {estadoModal && (
+        <FormularioUsuarios
+          isOpen={estadoModal}
+          cerrarModal={() => setEstadoModal(false)}
+          dataModificar={dataModificar || undefined}
+          onSave={handleGuardarModificar}
+        />
+      )}
     </>
   );
 };

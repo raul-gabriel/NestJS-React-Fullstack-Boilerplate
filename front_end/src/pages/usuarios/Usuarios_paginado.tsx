@@ -113,8 +113,8 @@ const Usuarios_paginado: React.FC = () => {
               <td className="filaTabla">{usuario.tipo_usuario}</td>
               <td className="filaTabla">
                 <span className={`inline-flex rounded-full py-1 px-3 text-xs font-medium ${usuario.estado === 'activo'
-                    ? 'bg-green-100 text-green-700'
-                    : 'bg-red-100 text-red-700'
+                  ? 'bg-green-100 text-green-700'
+                  : 'bg-red-100 text-red-700'
                   }`}>
                   {usuario.estado}
                 </span>

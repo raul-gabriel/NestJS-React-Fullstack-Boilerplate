@@ -9,13 +9,18 @@ interface PaginatedResponse<T> {
   lastPage: number;
 }
 
-interface UsePaginatedDataOptions {
+type FilterValue = string | number | boolean | undefined;
+
+type UsePaginatedDataOptions = {
   limit?: number;
-  filters?: Record<string, string | number | undefined>;
-}
+  filters?: Record<string, FilterValue>;
+};
 
-
-export function usePaginatedData<T>(endpoint: string, buscar: string = '', { limit = 10, filters = {} }: UsePaginatedDataOptions = {}) {
+export function usePaginatedData<T>(
+  endpoint: string,
+  buscar: string = '',
+  { limit = 10, filters = {} }: UsePaginatedDataOptions = {},
+) {
   const [page, setPage] = useState(1);
   const [result, setResult] = useState<PaginatedResponse<T>>({
     data: [], total: 0, page: 1, lastPage: 1,
@@ -29,16 +34,20 @@ export function usePaginatedData<T>(endpoint: string, buscar: string = '', { lim
     setIsLoading(true);
     setError(null);
     try {
-      const params = [
+      const filterParams = Object.entries(filters)
+        .filter(([, v]) => v !== undefined && v !== '')
+        .map(([k, v]) => `${k}=${v}`);
+
+      const query = [
         `page=${page}`,
         `limit=${limit}`,
-        buscar ? `buscar=${encodeURIComponent(buscar)}` : '',
-        ...Object.entries(filters)
-          .filter(([, v]) => v !== undefined && v !== '')
-          .map(([k, v]) => `${k}=${encodeURIComponent(String(v))}`),
-      ].filter(Boolean).join('&');
+        buscar ? `buscar=${buscar}` : '',
+        ...filterParams,
+      ]
+        .filter(Boolean)
+        .join('&');
 
-      const res = await fetchData<PaginatedResponse<T>>(endpoint, '', params);
+      const res = await fetchData<PaginatedResponse<T>>(endpoint, '', query);
       setResult(res);
     } catch (e: any) {
       setError(e.message ?? 'Error al cargar datos');
@@ -61,3 +70,27 @@ export function usePaginatedData<T>(endpoint: string, buscar: string = '', { lim
     setPage,
   };
 }
+
+
+/**
+ * // sin buscar, sin filtros
+usePaginatedData<Ciclo>('/ciclos');
+
+// solo buscar
+usePaginatedData<Matricula>('/matriculas', debouncedBuscar);
+
+// buscar + un filtro
+usePaginatedData<Usuario>('/usuarios', debouncedBuscar, {
+  filters: { unidad_id: unidadId || undefined },
+});
+
+// buscar + varios filtros
+usePaginatedData<Matricula>('/matriculas', debouncedBuscar, {
+  filters: { idCiclo, estadoPago },
+});
+
+// solo filtros, sin buscar
+usePaginatedData<Reporte>('/reportes', '', {
+  filters: { anio, mes },
+});
+ */

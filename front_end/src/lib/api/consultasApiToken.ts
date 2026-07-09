@@ -14,7 +14,6 @@ const api = axios.create({
 
 
 
-//manejar respuestas de error de la api
 // manejar respuestas de error de la api
 api.interceptors.response.use(
   (response) => response,
@@ -22,12 +21,10 @@ api.interceptors.response.use(
     if (axios.isAxiosError(error) && error.response) {
       const { status, data } = error.response;
       const message = data?.message || 'Ocurrió un error en el servidor';
-      const url = error.config?.url ?? '';
 
-      // login y verificar manejan su propio 401, no deben pasar por el flujo de "sesión expulsada"
-      const esRutaExcluida = url.includes('/auth/login') || url.includes('/auth/verificar');
 
-      if (status === 401 && !esRutaExcluida) {
+      //expusltar cerrar sesion cuando el token es invalido
+      if (status === 401) {
         expulsarInautorizacion(message);
         return new Promise(() => { });
       }

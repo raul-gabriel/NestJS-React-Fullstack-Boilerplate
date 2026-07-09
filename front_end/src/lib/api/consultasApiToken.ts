@@ -15,16 +15,20 @@ const api = axios.create({
 
 
 //manejar respuestas de error de la api
+// manejar respuestas de error de la api
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (axios.isAxiosError(error) && error.response) {
       const { status, data } = error.response;
       const message = data?.message || 'Ocurrió un error en el servidor';
+      const url = error.config?.url ?? '';
 
-      if (status === 401) {
+      // login y verificar manejan su propio 401, no deben pasar por el flujo de "sesión expulsada"
+      const esRutaExcluida = url.includes('/auth/login') || url.includes('/auth/verificar');
+
+      if (status === 401 && !esRutaExcluida) {
         expulsarInautorizacion(message);
-        //return Promise.reject({ message, status }); // rechaza pero sin llegar al onError del hook
         return new Promise(() => { });
       }
 
@@ -33,7 +37,6 @@ api.interceptors.response.use(
     return Promise.reject({ message: 'Error inesperado en la solicitud', status: 0 });
   }
 );
-
 
 const toApiResponse = <T>(response: AxiosResponse<any>): ApiResponse<T> => ({
   message: response.data?.message || 'OK',

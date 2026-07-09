@@ -30,3 +30,16 @@ export async function borrarToken() {
 }
 
 
+export const verificarSesionApi = async (): Promise<LoginResponse> => {
+  try {
+    const { data } = await axios.get(`${backendBaseUrl}/auth/verificar`, { withCredentials: true });
+
+    return data.user
+      ? { estado: true, message: 'Sesión válida', perfil: data.user }
+      : { estado: false, message: 'Sesión inválida' };
+
+  } catch (error) {
+    const { response } = error as AxiosError<ErrorRespuesta>;
+    return { estado: false, message: response?.data?.message || 'No hay sesión activa' };
+  }
+};

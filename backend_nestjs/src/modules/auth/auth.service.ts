@@ -1,5 +1,5 @@
 import { BadRequestException, HttpException, Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
-import { Response } from 'express';
+import type { Request, Response } from 'express';
 import { JwtService } from '@nestjs/jwt';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import type { EntityManager } from 'typeorm';
@@ -14,6 +14,12 @@ export class AuthService {
     private readonly codificador: CodificadorService,
   ) { }
 
+  // configuración base de la cookie del JWT, reusada en login/logout/verificarSesion
+  private readonly cookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: (process.env.NODE_ENV === 'production' ? 'strict' : 'lax') as 'strict' | 'lax',
+  };
 
   // valida credenciales, devuelve el perfil y guarda el JWT en cookie HttpOnly
   async login(loginDto: LoginDTO, res: Response): Promise<{ user: object }> {
@@ -43,11 +49,11 @@ export class AuthService {
         roles: user.tipo_usuario,
       });
 
+
+      //crear la cookie
       res.cookie('access_token', access_token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
-        maxAge: 1000 * 60 * 60 * 8,
+        ...this.cookieOptions,
+        // maxAge: 1000 * 60 * 60 * 8,
       });
 
       return {
@@ -64,15 +70,34 @@ export class AuthService {
     }
   }
 
-
-
   //— elimina la cookie del JWT para cerrar la sesión
   logout(res: Response): { message: string } {
-    res.clearCookie('access_token', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
-    });
+    res.clearCookie('access_token', this.cookieOptions);
     return { message: 'Sesión cerrada' };
+  }
+
+  //— verifica si el JWT de la cookie es válido y devuelve el usuario
+  async verificarSesion(req: Request, res: Response): Promise<{ user: object }> {
+    const token = req.cookies?.['access_token'];
+
+    if (!token) {
+      throw new UnauthorizedException('No hay sesión activa');
+    }
+
+    try {
+      const payload = this.jwtService.verify(token);
+
+      return {
+        user: {
+          id: payload.id,
+          name: payload.name,
+          roles: payload.roles,
+        },
+      };
+    } catch (error) {
+      // token inválido, manipulado o expirado -> borrar la cookie del navegador
+      res.clearCookie('access_token', this.cookieOptions);
+      throw new UnauthorizedException('Sesión inválida o expirada');
+    }
   }
 }

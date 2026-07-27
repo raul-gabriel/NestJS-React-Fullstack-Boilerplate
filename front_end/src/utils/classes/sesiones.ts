@@ -2,6 +2,7 @@ import { DataSesion } from "@/utils/store/DataSesion";
 import { redirigir } from "@/lib/hooks/navigation";
 import { Alerta, ToastFlotanteChico } from "./Toas";
 import { borrarToken, login, verificarSesionApi } from "@/lib/api/api_auth";
+import { getSesion, removeSesion, setSesion } from "../store/SesionCookie";
 
 /*
 Servicio de gestión de sesión que controla login (métodos para las sesiones que llaman
@@ -24,8 +25,10 @@ export const IniciarSesion = async (email: string, password: string): Promise<{ 
 // borra cookie en backend y limpia el store, sin redirigir (uso interno)
 async function limpiarSesion() {
     await borrarToken();
+    removeSesion();
     DataSesion.getState().LimpiarData();
 }
+
 
 // cierra sesión por acción explícita del usuario (ej. botón "Cerrar sesión") -> limpia y redirige
 export async function cerrarSesion() {
@@ -41,25 +44,29 @@ export function expulsarInautorizacion(mensaje: string) {
 
 // consulta al backend si la cookie es válida y sincroniza el store; se llama 1 vez por pestaña
 export async function hidratarSesion() {
-    if (DataSesion.getState().verificado) return;
+    if (getSesion()) return; // ya se validó en esta sesión de navegador
 
     try {
         const resultado = await verificarSesionApi();
         if (resultado.estado && resultado.perfil) {
-            DataSesion.getState().setUser(resultado.perfil);
+            DataSesion.getState().setUser(resultado.perfil);//guardar la data... de los usaurio nuevamente
         } else {
-            await limpiarSesion(); // sesión inválida -> limpia cookie + store, sin redirigir (lo hace ProtectedRoute)
+            await limpiarSesion();//si la verificacion es erronea
         }
     } finally {
-        DataSesion.getState().setVerificado(true);
+        setSesion(true);//guardar session
     }
 }
+
 
 // lee el store (sin red) y redirige a /panel si ya hay sesión -> se usa en la página de Login
 export function verificarSesion() {
     const user = DataSesion.getState().user;
-    if (user) {
+    if (user && getSesion()) {
         ToastFlotanteChico("info", 'Ya has iniciado sesión. No puedes volver a iniciar sesión.');
         redirigir('/panel');
+    } else {
+        limpiarSesion();
     }
 }
+

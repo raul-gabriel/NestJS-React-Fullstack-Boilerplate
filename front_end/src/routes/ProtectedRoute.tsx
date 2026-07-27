@@ -1,19 +1,23 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { DataSesion } from '@/utils/store/DataSesion';
 import { hidratarSesion } from '@/utils/classes/sesiones';
 import Preloader from '@/components/globales/Preloader';
+import { getSesion } from '@/utils/store/SesionCookie';
 
 const ProtectedRoute: React.FC = () => {
   const user = DataSesion((state) => state.user);
-  const verificado = DataSesion((state) => state.verificado);
+  const [hidratando, setHidratando] = useState(() => !getSesion());
 
-  // verifica la sesión con el backend solo al entrar a una ruta privada, una vez por pestaña
   useEffect(() => {
-    hidratarSesion();
+    if (!getSesion()) {
+      hidratarSesion()
+        .catch(() => { })
+        .finally(() => setHidratando(false));
+    }
   }, []);
 
-  if (!verificado) return <Preloader />; // espera la respuesta del backend antes de decidir
+  if (hidratando) return <Preloader />; // espera la respuesta del backend antes de decidir
 
   return user ? <Outlet /> : <Navigate to="/login" replace />;
 };

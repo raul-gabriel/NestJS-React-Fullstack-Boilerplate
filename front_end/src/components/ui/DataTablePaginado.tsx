@@ -1,5 +1,5 @@
-// src/components/ui/DataTablePaginado.tsx
-import React, { useState, useRef, type RefObject, type ReactNode } from 'react';
+import { useState, useRef, useLayoutEffect, type RefObject, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import Paginador from './Paginador';
 import DotsVerticalIcon from '../globales/DotsVerticalIcon';
 import useClickOutsideTabla from '../hooks/useClickOutsideTabla';
@@ -24,8 +24,20 @@ function TableRow<T>({
   renderRowActions?: (item: T) => ReactNode;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLElement>(null);
   useClickOutsideTabla(menuRef, () => setMenuOpen(false));
+
+  useLayoutEffect(() => {
+    if (menuOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setMenuPos({
+        top: rect.bottom + window.scrollY + 4,
+        left: rect.right + window.scrollX - 160, // 160px = w-40
+      });
+    }
+  }, [menuOpen]);
 
   return (
     <tr className="border-b border-gray-200 hover:bg-gray-100 transition">
@@ -33,18 +45,21 @@ function TableRow<T>({
       {renderRowActions && (
         <td className="py-3 px-4 relative">
           <button
+            ref={buttonRef}
             onClick={() => setMenuOpen((o) => !o)}
             className="inline-flex justify-center items-center rounded-md border border-gray-300 px-2 py-2 bg-white text-sm text-gray-700 hover:bg-gray-100 transition"
           >
             <DotsVerticalIcon className="w-5 h-5" />
           </button>
-          {menuOpen && (
+          {menuOpen && createPortal(
             <div
               ref={menuRef as RefObject<HTMLDivElement>}
-              className="absolute right-8 mt-1 w-40 rounded-md shadow-lg bg-white ring-1 ring-gray-200 z-10"
+              style={{ position: 'fixed', top: menuPos.top, left: menuPos.left }}
+              className="w-40 rounded-md shadow-lg bg-white ring-1 ring-gray-200 z-50"
             >
               {renderRowActions(item)}
-            </div>
+            </div>,
+            document.body
           )}
         </td>
       )}

@@ -1,4 +1,5 @@
-import { useState, useRef, type ReactNode, type RefObject } from 'react';
+import { useState, useRef, useLayoutEffect, type ReactNode, type RefObject } from 'react';
+import { createPortal } from 'react-dom';
 import DotsVerticalIcon from '../globales/DotsVerticalIcon';
 import useClickOutsideTabla from '../hooks/useClickOutsideTabla';
 
@@ -100,9 +101,23 @@ interface TablaRowProps<T> {
 
 const TablaRow = <T,>({ item, renderRow, renderRowActions }: TablaRowProps<T>) => {
   const [menuOpen, setMenuOpen] = useState(false);
- const menuRef = useRef<HTMLElement>(null);
+  const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLElement>(null);
 
   useClickOutsideTabla(menuRef, () => setMenuOpen(false));
+
+  useLayoutEffect(() => {
+    if (menuOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setMenuPos({
+        top: rect.bottom + window.scrollY + 4,
+        left: rect.right + window.scrollX - 192, // 192px = w-48
+      });
+    }
+  }, [menuOpen]);
+
+  const toggleMenu = () => setMenuOpen((prev) => !prev);
 
   return (
     <tr className="border-b border-gray-200 hover:bg-gray-200 transition">
@@ -111,19 +126,22 @@ const TablaRow = <T,>({ item, renderRow, renderRowActions }: TablaRowProps<T>) =
       {renderRowActions && (
         <td className="py-3 px-4 relative">
           <button
-            onClick={() => setMenuOpen(!menuOpen)}
+            ref={buttonRef}
+            onClick={toggleMenu}
             className="inline-flex justify-center items-center rounded-md border border-gray-300 px-2 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-100 focus:outline-none transition"
           >
             <DotsVerticalIcon className="w-5 h-5" />
           </button>
 
-          {menuOpen && (
+          {menuOpen && createPortal(
             <div
-               ref={menuRef as RefObject<HTMLDivElement>}
-              className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-gray-200 z-10"
+              ref={menuRef as RefObject<HTMLDivElement>}
+              style={{ position: 'fixed', top: menuPos.top, left: menuPos.left }}
+              className="w-48 rounded-md shadow-lg bg-white ring-1 ring-gray-200 z-50"
             >
               {renderRowActions(item)}
-            </div>
+            </div>,
+            document.body
           )}
         </td>
       )}

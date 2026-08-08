@@ -14,22 +14,23 @@ interface ComboBoxProps {
 
 const ComboBox: React.FC<ComboBoxProps> = ({
   options,
-  placeholder = "Seleccione una opción",
+  placeholder = "Selecciona una opción...",
   className = "",
   onSelect,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Option | null>(null);
+
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const filteredOptions = options.filter((o) =>
-    o.label.toLowerCase().includes(search.toLowerCase())
+  const filteredOptions = options.filter((option) =>
+    option.label.toLowerCase().includes(search.toLowerCase())
   );
 
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
     };
@@ -41,54 +42,97 @@ const ComboBox: React.FC<ComboBoxProps> = ({
     setSelected(option);
     setSearch("");
     setIsOpen(false);
-    onSelect?.(option.value);
+    if (onSelect) {
+      onSelect(option.value);
+    }
   };
 
   return (
-    <div className={`relative ${className}`} ref={dropdownRef}>
-      {/* Input visible */}
-      <div
-        className="relative inputField mb-0 mt-0 cursor-pointer"
-        onClick={() => setIsOpen((p) => !p)}
+    <div className={`relative w-64 ${className}`} ref={dropdownRef}>
+      {/* Botón principal */}
+      <button
+        type="button"
+        onClick={() => setIsOpen((prev) => !prev)}
+        className="w-full flex items-center justify-between
+                   border border-slate-300 rounded-md px-3 py-2.5
+                   text-left bg-white text-sm
+                   shadow-sm hover:border-slate-400
+                   focus:outline-none focus:ring-1 focus:ring-primary-700 focus:border-primary-700
+                   transition-colors"
       >
-        <input
-          value={selected?.label ?? ""}
-          readOnly
-          placeholder={placeholder}
-          className="w-full outline-none bg-transparent cursor-pointer text-gray-900"
-        />
-        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
-          <svg xmlns="http://www.w3.org/2000/svg" width={24} height={24} viewBox="0 0 24 24">
-            <path fill="currentColor" d="m6 9.657l1.414 1.414l4.243-4.243l4.243 4.243l1.414-1.414L11.657 4zm0 4.786l1.414-1.414l4.243 4.243l4.243-4.243l1.414 1.414l-5.657 5.657z" />
-          </svg>
+        <span className={`truncate ${selected ? "text-slate-800" : "text-slate-400"}`}>
+          {selected?.label || placeholder}
         </span>
-      </div>
+
+        <svg
+          className={`w-4 h-4 text-slate-400 shrink-0 ml-2 transition-transform ${isOpen ? "rotate-180" : ""}`}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-hidden">
-          <div className="p-2 border-b border-gray-200">
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar..."
-              className="w-full border border-gray-300 rounded-md p-2 text-gray-900 bg-gray-50 outline-none focus:ring-2 focus:ring-blue-500"
-            />
+        <div
+          className="absolute z-10 mt-1.5 w-full
+                     rounded-md shadow-lg
+                     bg-white border border-slate-200
+                     max-h-72 overflow-hidden"
+        >
+          {/* Input de búsqueda */}
+          <div className="p-2 border-b border-slate-100 bg-slate-50">
+            <div className="relative">
+              <svg
+                className="w-4 h-4 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 10a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Buscar..."
+                autoFocus
+                className="w-full border border-slate-300 rounded-md pl-8 pr-3 py-2 text-sm text-slate-800
+                           bg-white placeholder:text-slate-400
+                           focus:outline-none focus:ring-1 focus:ring-primary-700 focus:bordeprimary-700"
+              />
+            </div>
           </div>
-          <ul className="max-h-40 overflow-y-auto">
+
+          {/* Opciones */}
+          <ul className="max-h-52 overflow-y-auto py-1">
             {filteredOptions.length > 0 ? (
-              filteredOptions.map((o) => (
-                <li
-                  key={o.value}
-                  onClick={() => handleSelect(o)}
-                  className="p-2 cursor-pointer hover:bg-blue-100 text-gray-900 transition-colors"
-                >
-                  {o.label}
-                </li>
-              ))
+              filteredOptions.map((option) => {
+                const isSelected = selected?.value === option.value;
+                return (
+                  <li
+                    key={option.value}
+                    onClick={() => handleSelect(option)}
+                    className={`flex items-center justify-between px-3 py-2 text-sm cursor-pointer transition-colors
+                      ${isSelected ? "bg-[#1B3A5C]/5 text-[#1B3A5C] font-medium" : "text-slate-700 hover:bg-slate-50"}`}
+                  >
+                    {option.label}
+                    {isSelected && (
+                      <svg className="w-4 h-4 text-[#1B3A5C]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </li>
+                );
+              })
             ) : (
-              <li className="p-2 text-gray-500">No se encontraron opciones</li>
+              <li className="px-3 py-4 text-sm text-slate-400 text-center">
+                No se encontraron resultados
+              </li>
             )}
           </ul>
         </div>
@@ -101,22 +145,20 @@ export default ComboBox;
 
 /*
 const options = [
-        { value: "nextjs", label: "Next.js" },
-        { value: "react", label: "React" },
-        { value: "vue", label: "Vue.js" },
-        { value: "angular", label: "Angular" },
-        { value: "svelte", label: "Svelte" },
-    ];
+    { value: "nextjs", label: "Next.js" },
+    { value: "react", label: "React" },
+    { value: "vue", label: "Vue.js" },
+    { value: "angular", label: "Angular" },
+    { value: "svelte", label: "Svelte" },
+];
 
-    const handleSelect = (value: string) => {
-        console.log("Seleccionado:", value);
-    };
+const handleSelect = (value: string) => {
+    console.log("Seleccionado:", value);
+};
 
-            <ComboBox
-            options={options}
-            placeholder="Select framework..."
-            buttonStyle="border-gray-300 hover:border-blue-500 focus:ring-blue-500"
-            onSelect={handleSelect}
-        />
-        
-        */
+<ComboBox
+    options={options}
+    placeholder="Selecciona un framework..."
+    onSelect={handleSelect}
+/>
+*/

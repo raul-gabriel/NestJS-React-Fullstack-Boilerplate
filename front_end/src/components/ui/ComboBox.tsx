@@ -10,6 +10,7 @@ interface ComboBoxProps {
   placeholder?: string;
   className?: string;
   onSelect?: (value: string) => void;
+  onInputChange?: (texto: string) => void;
 }
 
 const ComboBox: React.FC<ComboBoxProps> = ({
@@ -17,6 +18,7 @@ const ComboBox: React.FC<ComboBoxProps> = ({
   placeholder = "Selecciona una opción...",
   className = "",
   onSelect,
+  onInputChange,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -44,6 +46,14 @@ const ComboBox: React.FC<ComboBoxProps> = ({
     setIsOpen(false);
     if (onSelect) {
       onSelect(option.value);
+    }
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearch(value);
+    if (onInputChange) {
+      onInputChange(value);
     }
   };
 
@@ -98,7 +108,7 @@ const ComboBox: React.FC<ComboBoxProps> = ({
               <input
                 type="text"
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={handleSearchChange}
                 placeholder="Buscar..."
                 autoFocus
                 className="w-full border border-slate-300 rounded-md pl-8 pr-3 py-2 text-sm text-slate-800
@@ -160,5 +170,58 @@ const handleSelect = (value: string) => {
     options={options}
     placeholder="Selecciona un framework..."
     onSelect={handleSelect}
+/>
+*/
+
+
+
+/*
+// ===================================== Ejemplo con API + búsqueda (debounce) ==================================
+import { useEffect, useRef, useState } from "react";
+import { fetchData } from "@/services/api";
+
+interface TupaApi {
+    id: number;
+    nombre: string;
+}
+
+const [options, setOptions] = useState<{ value: string; label: string }[]>([]);
+const [cargando, setCargando] = useState(false);
+const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+const buscar = async (texto: string = "") => {
+    try {
+        setCargando(true);
+        const data = await fetchData<TupaApi[]>("tupa-procedimientos/tupa-data", texto);
+        setOptions(data.map((t) => ({ value: String(t.id), label: t.nombre })));
+    } catch (error) {
+        console.error("Error al buscar:", error);
+    } finally {
+        setCargando(false);
+    }
+};
+
+// carga inicial (primeros resultados sin filtro)
+useEffect(() => {
+    buscar();
+}, []);
+
+// se dispara mientras el usuario escribe en el input del ComboBox
+const handleInputChange = (texto: string) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+        buscar(texto);
+    }, 350);
+};
+
+const handleSelect = (value: string) => {
+    console.log("Seleccionado:", value);
+};
+
+<ComboBox
+    options={options}
+    placeholder={cargando ? "Buscando..." : "Selecciona un framework..."}
+    onSelect={handleSelect}
+    onInputChange={handleInputChange}
 />
 */

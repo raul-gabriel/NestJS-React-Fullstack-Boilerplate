@@ -95,7 +95,7 @@ export const Tooltip: React.FC<TooltipProps> = ({ tooltipContent, children }) =>
 
       {visible && (
         <div
-          className="absolute z-50 bottom-full mb-2 
+          className="absolute z-50 bottom-full mb-2 w-max
                  px-3 py-2 
                  bg-white text-gray-900 
                  text-sm rounded-md shadow-lg 
@@ -112,7 +112,7 @@ export const Tooltip: React.FC<TooltipProps> = ({ tooltipContent, children }) =>
           </button>
 
           {/* Contenido */}
-          <pre className="font-sans text-sm whitespace-pre-wrap">
+          <pre className="font-sans text-sm whitespace-pre-wrap pr-5">
             {tooltipContent}
           </pre>
         </div>

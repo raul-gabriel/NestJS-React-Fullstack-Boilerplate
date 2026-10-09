@@ -1,7 +1,6 @@
 {
   "compilerOptions": {
-"rootDir": "./src",
-"ignoreDeprecations": "6.0",
+    "ignoreDeprecations": "6.0",
     "module": "nodenext",
     "moduleResolution": "nodenext",
     "resolvePackageJsonExports": true,
@@ -23,7 +22,7 @@
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
-    "typeRoots": [ "./node_modules/@types","src/core/types"
-    ]
+    "typeRoots": ["./node_modules/@types", "src/core/types"]
   }
 }
+

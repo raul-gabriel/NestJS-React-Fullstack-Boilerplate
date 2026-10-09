@@ -30,7 +30,7 @@
 
 
 
-    
+    "ignoreDeprecations": "6.0",
     /* para acceder con @ */
     "baseUrl": ".",
     "paths": {

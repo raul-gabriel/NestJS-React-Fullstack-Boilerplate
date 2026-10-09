@@ -1,17 +1,27 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, Req } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+  Req,
+} from '@nestjs/common';
 import { UsuariosService } from './usuarios.service';
-import { ActualizarPerfilDto, CreateUsuarioDto } from './dto/create-usuario.dto';
+import {
+  ActualizarPerfilDto,
+  CreateUsuarioDto,
+} from './dto/create-usuario.dto';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
 import { UserRole } from 'src/core/common/enums/roles.enum';
 import { Auth } from '../auth/decorators/auth.decorator';
 
-
 //@Auth(UserRole.ADMIN)  //proteger toda la api
 @Controller('usuarios')
 export class UsuariosController {
-  constructor(private readonly usuariosService: UsuariosService) { }
-
-
+  constructor(private readonly usuariosService: UsuariosService) {}
 
   @Auth()
   @Patch('perfil/:id')
@@ -26,26 +36,23 @@ export class UsuariosController {
     return this.usuariosService.create(createUsuarioDto);
   }
 
-
-
   //get con pagiancion y filtro
   @Auth(UserRole.ADMIN)
   @Get('paginado')
-  findAllPaginado(@Query('buscar') buscar?: string, @Query('estado') estado?: 'activo' | 'inactivo', @Query('page') page = 1, @Query('limit') limit = 10) {
+  findAllPaginado(
+    @Query('buscar') buscar?: string,
+    @Query('estado') estado?: 'activo' | 'inactivo',
+    @Query('page') page = 1,
+    @Query('limit') limit = 10,
+  ) {
     return this.usuariosService.findAll(buscar, estado, +page, +limit);
   }
-
-
-
 
   @Auth(UserRole.ADMIN)
   @Get()
   async findAll(@Query('buscar') buscar?: string) {
     return this.usuariosService.findAll(buscar);
   }
-
-
-
 
   @Auth()
   @Get(':id')
@@ -64,12 +71,7 @@ export class UsuariosController {
   remove(@Param('id') id: string) {
     return this.usuariosService.remove(+id);
   }
-
-
-
 }
-
-
 
 /*
 @Auth(UserRole.ADMIN,UserRole.EDITOR)  permiso solo administrador   y editor  

@@ -1,24 +1,30 @@
-import { BadRequestException, HttpException, Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
-import type { Request, Response } from 'express';
+import {
+  BadRequestException,
+  HttpException,
+  Injectable,
+  InternalServerErrorException,
+  UnauthorizedException,
+} from '@nestjs/common';
+import type { CookieOptions, Request, Response } from 'express';
 import { JwtService } from '@nestjs/jwt';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import type { EntityManager } from 'typeorm';
 import type { LoginDTO } from './dto/login.dto';
 import { CodificadorService } from '../../core/common/codificador.service';
 
-
 @Injectable()
 export class AuthService {
-  constructor(private readonly jwtService: JwtService,
+  constructor(
+    private readonly jwtService: JwtService,
     @InjectEntityManager() private readonly entityManager: EntityManager,
     private readonly codificador: CodificadorService,
-  ) { }
+  ) {}
 
   // configuración base de la cookie del JWT, reusada en login/logout/verificarSesion
-  private readonly cookieOptions = {
+  private readonly cookieOptions: CookieOptions = {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: (process.env.NODE_ENV === 'production' ? 'strict' : 'lax') as 'strict' | 'lax',
+    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
   };
 
   // valida credenciales, devuelve el perfil y guarda el JWT en cookie HttpOnly
@@ -27,12 +33,17 @@ export class AuthService {
       const { username, password } = loginDto;
 
       if (!username || !password) {
-        throw new BadRequestException('Ingresa los datos completos: username y password');
+        throw new BadRequestException(
+          'Ingresa los datos completos: username y password',
+        );
       }
 
       let user: any;
       try {
-        const result = await this.entityManager.query('CALL IniciarSesion(?, ?)', [username, password]);
+        const result = await this.entityManager.query(
+          'CALL IniciarSesion(?, ?)',
+          [username, password],
+        );
         user = result?.[0]?.[0];
       } catch (error) {
         console.error('Error en DB al iniciar sesión:', error);
@@ -40,7 +51,9 @@ export class AuthService {
       }
 
       if (!user || Number(user.cod) !== 1) {
-        throw new UnauthorizedException(user?.mensaje ?? 'Credenciales inválidas');
+        throw new UnauthorizedException(
+          user?.mensaje ?? 'Credenciales inválidas',
+        );
       }
 
       const access_token = this.jwtService.sign({
@@ -48,7 +61,6 @@ export class AuthService {
         name: user.nombres,
         roles: user.tipo_usuario,
       });
-
 
       //crear la cookie
       res.cookie('access_token', access_token, {
@@ -61,12 +73,14 @@ export class AuthService {
           id: user.id,
           name: user.nombres,
           roles: user.tipo_usuario,
-        }
+        },
       };
     } catch (error) {
       if (error instanceof HttpException) throw error;
       console.error('Error inesperado en login:', error);
-      throw new InternalServerErrorException('Ocurrió un error al iniciar sesión');
+      throw new InternalServerErrorException(
+        'Ocurrió un error al iniciar sesión',
+      );
     }
   }
 
@@ -77,7 +91,10 @@ export class AuthService {
   }
 
   //— verifica si el JWT de la cookie es válido y devuelve el usuario
-  async verificarSesion(req: Request, res: Response): Promise<{ user: object }> {
+  async verificarSesion(
+    req: Request,
+    res: Response,
+  ): Promise<{ user: object }> {
     const token = req.cookies?.['access_token'];
 
     if (!token) {

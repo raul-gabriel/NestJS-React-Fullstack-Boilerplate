@@ -12,7 +12,6 @@ import { join } from 'path';
 
 @Module({
   imports: [
-
     //configuracion de la base de datos
     ConfigModule.forRoot({
       isGlobal: true,
@@ -24,17 +23,14 @@ import { join } from 'path';
     AuthModule,
     UsuariosModule,
 
-
     // archivos estáticos mostrar pagina de react
-    ServeStaticModule.forRoot(
-      {
-        rootPath: join(__dirname, '..', 'public'),
-        serveRoot: '/',
-        exclude: ['/api*'],
-      },
-    ),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'public'),
+      serveRoot: '/',
+      exclude: ['/api*'],
+    }),
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule { }
+export class AppModule {}

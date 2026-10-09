@@ -9,7 +9,6 @@ async function bootstrap() {
 
   app.use(cookieParser()); // para leer las cookies de las requests
 
-
   //habiliar validación global de DTOs con class-validator
   app.useGlobalPipes(
     new ValidationPipe({
@@ -18,7 +17,6 @@ async function bootstrap() {
       transform: true,
     }),
   );
-
 
   // Configurar CORS para permitir solicitudes desde el frontend
   app.enableCors({
@@ -37,14 +35,10 @@ async function bootstrap() {
     }
   });
 
-
-
-
   await app.listen(process.env.PORT ?? 3000);
   console.log(`Servidor corriendo en el puerto: ${process.env.PORT ?? 3000}`);
 }
 bootstrap();
-
 
 /*
 npm install cookie-parser

@@ -15,16 +15,7 @@ import { AuthController } from './auth.controller';
     }),
   ],
   controllers: [AuthController],
-  providers: [
-    AuthService,
-    RolesGuard,
-    CodificadorService,
-  ],
-  exports: [
-    JwtModule,
-    AuthService,
-    RolesGuard,
-    CodificadorService,
-  ],
+  providers: [AuthService, RolesGuard, CodificadorService],
+  exports: [JwtModule, AuthService, RolesGuard, CodificadorService],
 })
-export class AuthModule { }
+export class AuthModule {}

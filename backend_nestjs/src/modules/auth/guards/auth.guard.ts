@@ -1,8 +1,12 @@
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
 import { BaseAuthGuard } from './base-auth.guard';
-
 
 /**
  * Verifica que la request tenga un JWT válido e inyecta el payload en `request.user`.

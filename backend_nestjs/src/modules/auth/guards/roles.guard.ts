@@ -1,10 +1,15 @@
-import { Injectable, CanActivate, ExecutionContext, UnauthorizedException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  UnauthorizedException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
 import { UserRole } from '../../../core/common/enums/roles.enum';
 import { BaseAuthGuard } from './base-auth.guard';
-
 
 /**
  * Verifica que el usuario tenga al menos uno de los roles definidos con @Roles('administrador','editor').
@@ -21,10 +26,10 @@ export class RolesGuard extends BaseAuthGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     // Lee los roles requeridos del decorador @Roles(), buscando primero en el método y luego en la clase
-    const requiredRoles = this.reflector.getAllAndOverride<UserRole[]>('roles', [
-      context.getHandler(),
-      context.getClass(),
-    ]);
+    const requiredRoles = this.reflector.getAllAndOverride<UserRole[]>(
+      'roles',
+      [context.getHandler(), context.getClass()],
+    );
 
     // Si la ruta no tiene @Roles(), no hay restricción de acceso
     if (!requiredRoles?.length) return true;
@@ -50,8 +55,10 @@ export class RolesGuard extends BaseAuthGuard implements CanActivate {
     }
 
     // Verifica que el usuario tenga al menos uno de los roles requeridos
-    if (!requiredRoles.some(role => userRoles.includes(role))) {
-      throw new ForbiddenException('No tienes permiso para acceder a este recurso');
+    if (!requiredRoles.some((role) => userRoles.includes(role))) {
+      throw new ForbiddenException(
+        'No tienes permiso para acceder a este recurso',
+      );
     }
 
     return true;

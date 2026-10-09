@@ -1,5 +1,14 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
-import { ActualizarPerfilDto, CreateUsuarioDto } from './dto/create-usuario.dto';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
+import {
+  ActualizarPerfilDto,
+  CreateUsuarioDto,
+} from './dto/create-usuario.dto';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Usuario } from './entities/usuario.entity';
@@ -8,49 +17,36 @@ import * as crypto from 'crypto';
 
 @Injectable()
 export class UsuariosService {
-  constructor(@InjectRepository(Usuario) private repo: Repository<Usuario>) { }
+  constructor(@InjectRepository(Usuario) private repo: Repository<Usuario>) {}
 
-
-async findAll(buscar?: string, estado?: 'activo' | 'inactivo', page = 1, limit = 10) {
-  const skip = (page - 1) * limit;
-
-  const where: FindOptionsWhere<Usuario>[] | FindOptionsWhere<Usuario> = buscar
-    ? [
-        { nombres: Like(`%${buscar}%`), ...(estado ? { estado } : {}) },
-        { email:   Like(`%${buscar}%`), ...(estado ? { estado } : {}) },
-      ]
-
-      //filtro si hay este... 
-    : estado? { estado }: {};
-
-  const [data, total] = await this.repo.findAndCount({
-    select: ['id', 'nombres', 'email', 'telefono', 'estado', 'tipo_usuario'],
-    where,
-    order: { id: 'ASC' },
-    take: limit,
-    skip,
-  });
-
-  return {
-    data,
-    total,
-    page,
-    lastPage: Math.ceil(total / limit),
-  };
-}
-
-  async findAllPaginado(buscar?: string, page = 1, limit = 10) {
+  async findAll(
+    buscar?: string,
+    estado?: 'activo' | 'inactivo',
+    page = 1,
+    limit = 10,
+  ) {
     const skip = (page - 1) * limit;
 
-    const where = buscar
-      ? [
-        { nombres: Like(`%${buscar}%`) },
-        { email: Like(`%${buscar}%`) },
-      ]
-      : {};
+    const where: FindOptionsWhere<Usuario>[] | FindOptionsWhere<Usuario> =
+      buscar
+        ? [
+            { nombres: Like(`%${buscar}%`), ...(estado ? { estado } : {}) },
+            { email: Like(`%${buscar}%`), ...(estado ? { estado } : {}) },
+          ]
+        : //filtro si hay este...
+          estado
+          ? { estado }
+          : {};
 
     const [data, total] = await this.repo.findAndCount({
-      select: ['id', 'nombres', 'email', 'telefono', 'estado', 'tipo_usuario'],
+      select: {
+        id: true,
+        nombres: true,
+        email: true,
+        telefono: true,
+        estado: true,
+        tipo_usuario: true,
+      },
       where,
       order: { id: 'ASC' },
       take: limit,
@@ -65,19 +61,51 @@ async findAll(buscar?: string, estado?: 'activo' | 'inactivo', page = 1, limit =
     };
   }
 
+  async findAllPaginado(buscar?: string, page = 1, limit = 10) {
+    const skip = (page - 1) * limit;
 
+    const where = buscar
+      ? [{ nombres: Like(`%${buscar}%`) }, { email: Like(`%${buscar}%`) }]
+      : {};
 
+    const [data, total] = await this.repo.findAndCount({
+      select: {
+        id: true,
+        nombres: true,
+        email: true,
+        telefono: true,
+        estado: true,
+        tipo_usuario: true,
+      },
+      where,
+      order: { id: 'ASC' },
+      take: limit,
+      skip,
+    });
+
+    return {
+      data,
+      total,
+      page,
+      lastPage: Math.ceil(total / limit),
+    };
+  }
 
   async findOne(id: number) {
     const user = await this.repo.findOne({
       where: { id },
-      select: ['id', 'nombres', 'email', 'telefono', 'estado', 'tipo_usuario'],
+      select: {
+        id: true,
+        nombres: true,
+        email: true,
+        telefono: true,
+        estado: true,
+        tipo_usuario: true,
+      },
     });
     if (!user) throw new NotFoundException('Usuario no encontrado');
     return user;
   }
-
-
 
   async create(dto: CreateUsuarioDto) {
     if (await this.repo.findOne({ where: { email: dto.email } })) {
@@ -106,7 +134,10 @@ async findAll(buscar?: string, estado?: 'activo' | 'inactivo', page = 1, limit =
     }
 
     if (dto.password && dto.password !== '__SIN_CAMBIO__') {
-      dto.password = crypto.createHash('sha256').update(dto.password).digest('hex');
+      dto.password = crypto
+        .createHash('sha256')
+        .update(dto.password)
+        .digest('hex');
     } else {
       delete dto.password; // no toca el password
     }
@@ -125,13 +156,14 @@ async findAll(buscar?: string, estado?: 'activo' | 'inactivo', page = 1, limit =
       return { message: 'Usuario eliminado' };
     } catch (error: any) {
       if (error.code === 'ER_ROW_IS_REFERENCED_2' || error.errno === 1451) {
-        return { message: 'No se puede eliminar porque este Registro está relacionado con otros registros' };
+        return {
+          message:
+            'No se puede eliminar porque este Registro está relacionado con otros registros',
+        };
       }
       throw error;
     }
   }
-
-
 
   async actualizarPerfil(id: number, dto: ActualizarPerfilDto) {
     const user = await this.repo.findOne({ where: { id } });
@@ -140,10 +172,15 @@ async findAll(buscar?: string, estado?: 'activo' | 'inactivo', page = 1, limit =
     // verificar password actual antes de cualquier cambio
     if (dto.password || dto.email) {
       if (!dto.password_actual) {
-        throw new BadRequestException('Debes ingresar tu contraseña actual para realizar cambios');
+        throw new BadRequestException(
+          'Debes ingresar tu contraseña actual para realizar cambios',
+        );
       }
 
-      const passwordActualHash = crypto.createHash('sha256').update(dto.password_actual).digest('hex');
+      const passwordActualHash = crypto
+        .createHash('sha256')
+        .update(dto.password_actual)
+        .digest('hex');
       if (user.password !== passwordActualHash) {
         throw new ConflictException('La contraseña actual es incorrecta');
       }
@@ -157,11 +194,13 @@ async findAll(buscar?: string, estado?: 'activo' | 'inactivo', page = 1, limit =
     }
 
     if (dto.password) {
-      user.password = crypto.createHash('sha256').update(dto.password).digest('hex');
+      user.password = crypto
+        .createHash('sha256')
+        .update(dto.password)
+        .digest('hex');
     }
 
     await this.repo.save(user);
     return { message: 'Perfil actualizado con éxito' };
   }
-
 }

@@ -18,7 +18,12 @@ const Usuarios: React.FC = () => {
   const [dataModificar, setDataModificar] = useState<Usuario | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const { data, isLoading, error, refetch } = useFetchData<Usuario[]>('/usuarios', debouncedBuscar);
+  const { data, isLoading, error, refetch } = useFetchData<{
+    data: Usuario[];
+    total: number;
+    page: number;
+    lastPage: number;
+  }>('/usuarios', debouncedBuscar);
 
   const handleSuccess = (data: ApiResponse) => {
     ToastFlotanteMediano(data.status, data.message);
@@ -86,7 +91,7 @@ const Usuarios: React.FC = () => {
 
         <DataTable
           headers={['ID', 'Nombres', 'Email', 'Teléfono', 'Rol', 'Estado']}
-          data={data || []}
+          data={data?.data ?? []}
           itemsPerPage={50}
           renderRow={(usuario) => (
             <>

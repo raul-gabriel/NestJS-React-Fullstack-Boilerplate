@@ -6,55 +6,106 @@ type Option = {
 };
 
 interface ComboBoxProps {
-  options: Option[];
+  /** Modo local: lista fija, filtra en el cliente */
+  options?: Option[];
+  /** Modo API: busca en el servidor (debounce interno). Si se pasa, tiene prioridad sobre options */
+  fetchOptions?: (search: string) => Promise<Option[]>;
+  /** Opcional: valor controlado desde el padre ("" para limpiar) */
+  value?: string;
   placeholder?: string;
   className?: string;
-  onSelect?: (value: string) => void;
+  debounceMs?: number;
+  onSelect?: (value: string, option: Option) => void;
+  /** Se dispara al escribir (útil si prefieres manejar la búsqueda afuera, como antes) */
   onInputChange?: (texto: string) => void;
 }
 
 const ComboBox: React.FC<ComboBoxProps> = ({
-  options,
+  options = [],
+  fetchOptions,
+  value,
   placeholder = "Selecciona una opción...",
   className = "",
+  debounceMs = 350,
   onSelect,
   onInputChange,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Option | null>(null);
+  const [remoteOptions, setRemoteOptions] = useState<Option[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const fetchRef = useRef(fetchOptions);
+  fetchRef.current = fetchOptions; // evita bucles si el padre no usa useCallback
 
-  const filteredOptions = options.filter((option) =>
-    option.label.toLowerCase().includes(search.toLowerCase())
-  );
+  const isRemote = !!fetchOptions;
 
+  const currentOptions = isRemote
+    ? remoteOptions
+    : options.filter((o) => o.label.toLowerCase().includes(search.toLowerCase()));
+
+  // Click fuera
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
+        setSearch("");
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Modo API: carga al abrir y al escribir (debounce)
+  useEffect(() => {
+    if (!isRemote || !isOpen) return;
+    let active = true;
+    const timer = setTimeout(
+      async () => {
+        try {
+          setLoading(true);
+          const result = await fetchRef.current!(search);
+          if (active) setRemoteOptions(result);
+        } catch (err) {
+          console.error("Error al buscar opciones:", err);
+        } finally {
+          if (active) setLoading(false);
+        }
+      },
+      search ? debounceMs : 0
+    );
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [search, isOpen, isRemote, debounceMs]);
+
+  // Sincronizar value controlado
+  useEffect(() => {
+    if (value === undefined) return;
+    if (value === "") {
+      setSelected(null);
+      return;
+    }
+    const pool = isRemote ? remoteOptions : options;
+    const found = pool.find((o) => o.value === value);
+    if (found) setSelected(found);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value, remoteOptions, options]);
+
   const handleSelect = (option: Option) => {
     setSelected(option);
     setSearch("");
     setIsOpen(false);
-    if (onSelect) {
-      onSelect(option.value);
-    }
+    onSelect?.(option.value, option);
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setSearch(value);
-    if (onInputChange) {
-      onInputChange(value);
-    }
+    const texto = e.target.value;
+    setSearch(texto);
+    onInputChange?.(texto);
   };
 
   return (
@@ -113,15 +164,17 @@ const ComboBox: React.FC<ComboBoxProps> = ({
                 autoFocus
                 className="w-full border border-slate-300 rounded-md pl-8 pr-3 py-2 text-sm text-slate-800
                            bg-white placeholder:text-slate-400
-                           focus:outline-none focus:ring-1 focus:ring-primary-700 focus:bordeprimary-700"
+                           focus:outline-none focus:ring-1 focus:ring-primary-700 focus:border-primary-700"
               />
             </div>
           </div>
 
           {/* Opciones */}
           <ul className="max-h-52 overflow-y-auto py-1">
-            {filteredOptions.length > 0 ? (
-              filteredOptions.map((option) => {
+            {loading ? (
+              <li className="px-3 py-4 text-sm text-slate-400 text-center">Buscando...</li>
+            ) : currentOptions.length > 0 ? (
+              currentOptions.map((option) => {
                 const isSelected = selected?.value === option.value;
                 return (
                   <li
@@ -154,74 +207,24 @@ const ComboBox: React.FC<ComboBoxProps> = ({
 export default ComboBox;
 
 /*
-const options = [
-    { value: "nextjs", label: "Next.js" },
+// ============ Modo local ============
+<ComboBox
+  options={[
     { value: "react", label: "React" },
     { value: "vue", label: "Vue.js" },
-    { value: "angular", label: "Angular" },
-    { value: "svelte", label: "Svelte" },
-];
-
-const handleSelect = (value: string) => {
-    console.log("Seleccionado:", value);
-};
-
-<ComboBox
-    options={options}
-    placeholder="Selecciona un framework..."
-    onSelect={handleSelect}
+  ]}
+  onSelect={(value) => console.log(value)}
 />
-*/
 
-
-
-/*
-// ===================================== Ejemplo con API + búsqueda (debounce) ==================================
-import { useEffect, useRef, useState } from "react";
-import { fetchData } from "@/services/api";
-
-interface TupaApi {
-    id: number;
-    nombre: string;
-}
-
-const [options, setOptions] = useState<{ value: string; label: string }[]>([]);
-const [cargando, setCargando] = useState(false);
-const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-const buscar = async (texto: string = "") => {
-    try {
-        setCargando(true);
-        const data = await fetchData<TupaApi[]>("tupa-procedimientos/tupa-data", texto);
-        setOptions(data.map((t) => ({ value: String(t.id), label: t.nombre })));
-    } catch (error) {
-        console.error("Error al buscar:", error);
-    } finally {
-        setCargando(false);
-    }
-};
-
-// carga inicial (primeros resultados sin filtro)
-useEffect(() => {
-    buscar();
-}, []);
-
-// se dispara mientras el usuario escribe en el input del ComboBox
-const handleInputChange = (texto: string) => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-        buscar(texto);
-    }, 350);
-};
-
-const handleSelect = (value: string) => {
-    console.log("Seleccionado:", value);
+// ============ Modo API (debounce interno) ============
+const fetchTupa = async (texto: string) => {
+  const data = await fetchData<TupaApi[]>("tupa-procedimientos/tupa-data", texto);
+  return data.map((t) => ({ value: String(t.id), label: t.nombre }));
 };
 
 <ComboBox
-    options={options}
-    placeholder={cargando ? "Buscando..." : "Selecciona un framework..."}
-    onSelect={handleSelect}
-    onInputChange={handleInputChange}
+  fetchOptions={fetchTupa}
+  value={tupaId}
+  onSelect={(value) => setTupaId(value)}
 />
 */

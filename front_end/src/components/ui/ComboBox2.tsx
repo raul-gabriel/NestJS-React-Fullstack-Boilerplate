@@ -20,12 +20,13 @@ const ComboBox2 = forwardRef(
   ) => {
     const [options, setOptions] = useState<{ value: string; label: string }[]>([]); // Opciones actuales
     const [search, setSearch] = useState(""); // Texto del input de búsqueda
-    const [selectedLabel, setSelectedLabel] = useState<string>(""); // Texto visible del input
+    const [selectedLabel, setSelectedLabel] = useState<string>(""); // Texto visible del campo
     const [selectedValue, setSelectedValue] = useState<string>(""); // Valor registrado en el formulario
     const [isOpen, setIsOpen] = useState(false); // Estado del dropdown
     const [loading, setLoading] = useState(false); // Estado de carga
 
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const searchInputRef = useRef<HTMLInputElement>(null);
 
     // Exponer método setSelectedOption
     useImperativeHandle(ref, () => ({
@@ -35,6 +36,13 @@ const ComboBox2 = forwardRef(
         register.onChange({ target: { name, value } });
       },
     }));
+
+    // Poner el cursor en el buscador al abrir el dropdown
+    useEffect(() => {
+      if (isOpen) {
+        searchInputRef.current?.focus();
+      }
+    }, [isOpen]);
 
     // Consultar opciones iniciales al montar el componente
     useEffect(() => {
@@ -60,8 +68,6 @@ const ComboBox2 = forwardRef(
         setLoading(true);
         try {
           const newOptions = await fetchOptions(search);
-
-
           setOptions(newOptions);
         } catch (error) {
           console.error("Error al buscar opciones:", error);
@@ -107,7 +113,15 @@ const ComboBox2 = forwardRef(
         )}
 
         <div
-          className={`relative inputField_full mb-0 mt-0 border 
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              setIsOpen((prev) => !prev);
+            }
+          }}
+          className={`relative inputField_full mb-0 mt-0 border cursor-pointer select-none
       ${error ? "border-red-500" : "border-gray-300"} 
       ${className}`}
           onClick={() => setIsOpen((prev) => !prev)}
@@ -119,16 +133,17 @@ const ComboBox2 = forwardRef(
             hidden
           />
 
-          {/* Input visible */}
-          <input
-            value={selectedLabel}
-            readOnly
-            placeholder={placeholder || "Seleccione una opción"}
-            className="w-full outline-none bg-transparent cursor-pointer text-gray-900"
-          />
+          {/* Texto visible (ya no es input, no muestra cursor) */}
+          <span
+            className={`block w-full truncate pr-8 ${
+              selectedLabel ? "text-gray-900" : "text-gray-400"
+            }`}
+          >
+            {selectedLabel || placeholder || "Seleccione una opción"}
+          </span>
 
           {/* Icono */}
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width={24}
@@ -148,10 +163,12 @@ const ComboBox2 = forwardRef(
           <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
             <div className="p-2 border-b border-gray-200">
               <input
+                ref={searchInputRef}
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Buscar..."
+                autoFocus
                 className="w-full border border-gray-300 rounded-md p-2 text-gray-900 bg-gray-50 outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>

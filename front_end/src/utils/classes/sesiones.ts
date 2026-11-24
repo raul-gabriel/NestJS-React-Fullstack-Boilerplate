@@ -16,6 +16,7 @@ export const IniciarSesion = async (email: string, password: string): Promise<{ 
 
     if (estado) {
         DataSesion.getState().setUser(perfil ?? null);
+        setSesion(true);
         redirigir('/panel');
     }
 
@@ -44,17 +45,16 @@ export function expulsarInautorizacion(mensaje: string) {
 
 // consulta al backend si la cookie es válida y sincroniza el store; se llama 1 vez por pestaña
 export async function hidratarSesion() {
-    if (getSesion()) return; // ya se validó en esta sesión de navegador
-
     try {
         const resultado = await verificarSesionApi();
         if (resultado.estado && resultado.perfil) {
-            DataSesion.getState().setUser(resultado.perfil);//guardar la data... de los usaurio nuevamente
+            DataSesion.getState().setUser(resultado.perfil);
+            setSesion(true); // solo si la verificación fue exitosa
         } else {
-            await limpiarSesion();//si la verificacion es erronea
+            await limpiarSesion();
         }
-    } finally {
-        setSesion(true);//guardar session
+    } catch {
+        await limpiarSesion(); // error de red/401: no dejar user viejo en el store
     }
 }
 

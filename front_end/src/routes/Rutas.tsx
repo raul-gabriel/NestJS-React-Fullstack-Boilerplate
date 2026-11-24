@@ -11,7 +11,6 @@ import AdminLayout from '@/Layouts/AdminLayout';
 import Perfil from '@/pages/usuarios/Perfil';
 import Usuarios_paginado from '@/pages/usuarios/Usuarios_paginado';
 
-
 function Rutas() {
   const { pathname } = useLocation();
   const navigate = useNavigate();

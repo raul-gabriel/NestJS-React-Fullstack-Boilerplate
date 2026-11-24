@@ -11,15 +11,13 @@ const ProtectedRoute: React.FC = () => {
 
   useEffect(() => {
     if (!getSesion()) {
-      hidratarSesion()
-        .catch(() => { })
-        .finally(() => setHidratando(false));
+      hidratarSesion().finally(() => setHidratando(false));
     }
   }, []);
 
-  if (hidratando) return <Preloader />; // espera la respuesta del backend antes de decidir
+  if (hidratando) return <Preloader />;
 
-  return user ? <Outlet /> : <Navigate to="/login" replace />;
+  return user && getSesion() ? <Outlet /> : <Navigate to="/login" replace />;
 };
 
 export default ProtectedRoute;
